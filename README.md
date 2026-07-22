@@ -1,38 +1,38 @@
-# TeknoMarket AI — Ürün Önerisi (Upsell) Widget
+# TeknoMarket AI — Product Recommendation (Upsell) Widget
 
-Canlı demo / tanıtım sayfası: **[fancy-queijadas-00050a.netlify.app](https://fancy-queijadas-00050a.netlify.app)**
+Live demo / landing page: **[fancy-queijadas-00050a.netlify.app](https://fancy-queijadas-00050a.netlify.app)**
 
-E-ticaret mağazalarına eklenebilecek AI destekli ürün önerisi widget'ının kanıt-niteliğinde (proof-of-concept) demosu. Ziyaretçi bir ürüne baktığında, "sıkça birlikte alınanlar" (tamamlayıcı ürün / upsell) ve "benzer ürünler" önerir. Amaç: ortalama sepet tutarını artırmak.
+A proof-of-concept demo of an AI-powered product recommendation widget that can be embedded into e-commerce stores. When a visitor views a product, it suggests "frequently bought together" items (complementary products / upsell) and "similar products". Goal: increase the average basket size.
 
-> **Not:** Bu depodaki ürün verisi (`data/products.json`) tamamen kurgusal örnek veridir — "Aurora", "NovaBook", "TeknoMarket" gibi isimler demo amaçlı uydurulmuştur, gerçek bir marka veya mağazayla ilgisi yoktur.
+> **Note:** The product data in this repository (`data/products.json`) is entirely fictional sample data — names like "Aurora", "NovaBook", and "TeknoMarket" were made up for demo purposes and have no connection to any real brand or store.
 
-## Neler var
+## What's inside
 
-- `public/demo.html` — Tek dosyalık, sunucu gerektirmeyen tam pazarlama sayfası + çalışan interaktif widget (TR/EN dil desteği).
-- `data/products.json` — Örnek ürün kataloğu (30 ürün, elektronik/aksesuar nişi).
-- `build/generate.js` — TF-IDF metin benzerliği + kategori kuralı ile "benzer ürün" ve "tamamlayıcı ürün" önerilerini hesaplar, `data/recommendations.json` üretir.
-- `build/build-demo.js` — Ürün + öneri verisini HTML şablonuna gömüp nihai `public/demo.html` dosyasını üretir.
-- `build/test-jsdom.js`, `build/test-all-products.js` — Demo'nun mantığını (sepete ekleme, dil geçişi, 30 ürünün tamamı) tarayıcı olmadan (jsdom ile) test eder.
+- `public/demo.html` — A single-file, server-free full marketing page + working interactive widget (TR/EN language support, English by default).
+- `data/products.json` — Sample product catalog (30 products, electronics/accessories niche).
+- `build/generate.js` — Computes "similar product" and "complementary product" recommendations using TF-IDF text similarity + a category rule, and produces `data/recommendations.json`.
+- `build/build-demo.js` — Embeds the product + recommendation data into the HTML template to produce the final `public/demo.html` file.
+- `build/test-jsdom.js`, `build/test-all-products.js` — Test the demo's logic (add-to-cart, language switching, all 30 products) without a browser (via jsdom).
 
-## Nasıl çalıştırılır
+## How to run
 
 ```bash
 npm install
-npm run build   # data/recommendations.json ve public/demo.html üretir
-npm test        # mantık testlerini çalıştırır
+npm run build   # produces data/recommendations.json and public/demo.html
+npm test        # runs the logic tests
 ```
 
-`public/demo.html` üretildikten sonra çift tıklayarak doğrudan tarayıcıda açılabilir — hiçbir sunucu veya API anahtarı gerekmez.
+Once `public/demo.html` is generated, it can be opened directly in a browser by double-clicking — no server or API key required.
 
-## Neden gerçek AI API'si (OpenAI/Claude) yerine TF-IDF kullanıldı
+## Why TF-IDF instead of a real AI API (OpenAI/Claude)
 
-Bu demo aşamasında maliyet ve bağımlılık sıfır olsun diye öneriler yerel/ücretsiz bir metin benzerliği yöntemiyle (TF-IDF + kategori kuralı) hesaplanıyor. Gerçek bir mağazaya bağlanacak üretim sürümünde bu adım, daha iyi semantik kalite için embedding tabanlı bir yönteme (OpenAI/Claude embedding + vektör veritabanı) çevrilecek — arayüz ve iş mantığı aynı kalıyor.
+At this demo stage, recommendations are computed with a local/free text-similarity method (TF-IDF + category rule) so that cost and dependencies are zero. In a production version connected to a real store, this step would be swapped for an embedding-based method (OpenAI/Claude embeddings + a vector database) for better semantic quality — the interface and business logic stay the same.
 
-## Yol haritası
+## Roadmap
 
-1. **(Şu an)** Bu demoyu gerçek Türk e-ticaret sahiplerine göstererek talep doğrula.
-2. İlgi gösteren mağazalar için, onların gerçek ürün CSV'siyle özelleştirilmiş demo hazırla.
-3. İlk ödeyen müşteriler bulununca: CSV yükleme + script-tag entegrasyonu olan gerçek backend'i inşa et.
-4. Türkiye'de birkaç ay çalıştıktan sonra Shopify App Store üzerinden global pazara aç.
+1. **(Now)** Validate demand by showing this demo to real Turkish e-commerce owners.
+2. For interested stores, prepare a customized demo using their real product CSV.
+3. Once the first paying customers are found: build the real backend with CSV upload + script-tag integration.
+4. After running in Turkey for a few months, expand to the global market via the Shopify App Store.
 
-Detaylı fiyatlandırma ve sonraki adımlar için `sonraki-adimlar.md` dosyasına bakın.
+For detailed pricing and next steps, see the `next-steps.md` file.
