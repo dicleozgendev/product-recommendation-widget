@@ -1,0 +1,261 @@
+{
+  "p1": {
+    "similar": [
+      "p2"
+    ],
+    "complementary": [
+      "p3",
+      "p7",
+      "p6"
+    ]
+  },
+  "p2": {
+    "similar": [
+      "p1"
+    ],
+    "complementary": [
+      "p4",
+      "p9",
+      "p7"
+    ]
+  },
+  "p3": {
+    "similar": [
+      "p4"
+    ],
+    "complementary": [
+      "p1",
+      "p2",
+      "p5"
+    ]
+  },
+  "p4": {
+    "similar": [
+      "p3"
+    ],
+    "complementary": [
+      "p2",
+      "p1",
+      "p5"
+    ]
+  },
+  "p5": {
+    "similar": [],
+    "complementary": [
+      "p2",
+      "p1",
+      "p3"
+    ]
+  },
+  "p6": {
+    "similar": [
+      "p7"
+    ],
+    "complementary": [
+      "p30",
+      "p10",
+      "p1"
+    ]
+  },
+  "p7": {
+    "similar": [
+      "p6"
+    ],
+    "complementary": [
+      "p10",
+      "p2",
+      "p1"
+    ]
+  },
+  "p8": {
+    "similar": [
+      "p9"
+    ],
+    "complementary": [
+      "p7",
+      "p2",
+      "p1"
+    ]
+  },
+  "p9": {
+    "similar": [
+      "p8"
+    ],
+    "complementary": [
+      "p2",
+      "p7",
+      "p1"
+    ]
+  },
+  "p10": {
+    "similar": [
+      "p11"
+    ],
+    "complementary": [
+      "p7",
+      "p6",
+      "p1"
+    ]
+  },
+  "p11": {
+    "similar": [
+      "p10"
+    ],
+    "complementary": [
+      "p7",
+      "p30",
+      "p1"
+    ]
+  },
+  "p12": {
+    "similar": [],
+    "complementary": [
+      "p13",
+      "p15",
+      "p29"
+    ]
+  },
+  "p13": {
+    "similar": [
+      "p15",
+      "p14"
+    ],
+    "complementary": [
+      "p12",
+      "p29"
+    ]
+  },
+  "p14": {
+    "similar": [
+      "p15",
+      "p13"
+    ],
+    "complementary": [
+      "p12",
+      "p29"
+    ]
+  },
+  "p15": {
+    "similar": [
+      "p13",
+      "p14"
+    ],
+    "complementary": [
+      "p29",
+      "p12"
+    ]
+  },
+  "p16": {
+    "similar": [],
+    "complementary": [
+      "p17",
+      "p18"
+    ]
+  },
+  "p17": {
+    "similar": [
+      "p18"
+    ],
+    "complementary": [
+      "p16"
+    ]
+  },
+  "p18": {
+    "similar": [
+      "p17"
+    ],
+    "complementary": [
+      "p16"
+    ]
+  },
+  "p19": {
+    "similar": [
+      "p20"
+    ],
+    "complementary": [
+      "p30"
+    ]
+  },
+  "p20": {
+    "similar": [
+      "p19"
+    ],
+    "complementary": [
+      "p30"
+    ]
+  },
+  "p21": {
+    "similar": [],
+    "complementary": [
+      "p23",
+      "p22"
+    ]
+  },
+  "p22": {
+    "similar": [
+      "p23"
+    ],
+    "complementary": [
+      "p21"
+    ]
+  },
+  "p23": {
+    "similar": [
+      "p22"
+    ],
+    "complementary": [
+      "p21"
+    ]
+  },
+  "p24": {
+    "similar": [],
+    "complementary": [
+      "p25",
+      "p26",
+      "p29"
+    ]
+  },
+  "p25": {
+    "similar": [
+      "p26"
+    ],
+    "complementary": [
+      "p24"
+    ]
+  },
+  "p26": {
+    "similar": [
+      "p25"
+    ],
+    "complementary": [
+      "p24"
+    ]
+  },
+  "p27": {
+    "similar": [],
+    "complementary": [
+      "p28"
+    ]
+  },
+  "p28": {
+    "similar": [],
+    "complementary": [
+      "p27"
+    ]
+  },
+  "p29": {
+    "similar": [],
+    "complementary": [
+      "p24",
+      "p12"
+    ]
+  },
+  "p30": {
+    "similar": [],
+    "complementary": [
+      "p6",
+      "p7",
+      "p10"
+    ]
+  }
+}

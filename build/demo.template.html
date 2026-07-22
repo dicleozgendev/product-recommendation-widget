@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Ürün Önerisi Widget — TeknoMarket AI</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #171a21;
+    --panel-2: #1f232c;
+    --border: #2a2f3a;
+    --text: #eef1f6;
+    --muted: #9aa3b2;
+    --accent: #6c8cff;
+    --accent-2: #35d493;
+    --danger: #ff6b6b;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  a { color: inherit; }
+  button { font: inherit; cursor: pointer; }
+  section { max-width: 1180px; margin: 0 auto; padding: 70px 24px; }
+
+  /* ---- Nav ---- */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: rgba(11,13,18,0.85);
+    backdrop-filter: blur(8px); z-index: 100;
+  }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size: 17px; }
+  .brand .logo-dot { width:10px; height:10px; border-radius:50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 12px rgba(108,140,255,0.6); }
+  .nav-links { display:flex; gap: 26px; font-size: 13.5px; font-weight:600; color: var(--muted); }
+  .nav-links a { text-decoration:none; }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 720px) { .nav-links { display:none; } }
+  .nav-right { display:flex; align-items:center; gap: 12px; }
+  .lang-toggle {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 14px; font-size: 12.5px; font-weight:700;
+  }
+  .lang-toggle:hover { border-color: var(--accent); }
+  .nav-cta {
+    background: var(--accent); color:#08090c; border:none; border-radius: 999px;
+    padding: 8px 16px; font-size: 12.5px; font-weight: 800;
+  }
+  .nav-cta:hover { filter: brightness(1.08); }
+
+  /* ---- Hero ---- */
+  .hero-section {
+    text-align:center; padding: 90px 24px 60px;
+    background:
+      radial-gradient(600px 300px at 50% -10%, rgba(108,140,255,0.18), transparent 70%),
+      radial-gradient(500px 260px at 80% 10%, rgba(53,212,147,0.12), transparent 70%);
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:6px; font-size: 12.5px; font-weight:700;
+    background: rgba(108,140,255,0.12); border: 1px solid rgba(108,140,255,0.35); color: var(--accent);
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 22px;
+  }
+  .hero-section h1 { font-size: 40px; line-height:1.15; margin: 0 0 18px; max-width: 780px; margin-left:auto; margin-right:auto; letter-spacing:-0.02em; }
+  .hero-section p.hero-sub { color: var(--muted); font-size: 16.5px; max-width: 620px; margin: 0 auto 34px; line-height:1.6; }
+  .hero-ctas { display:flex; gap: 14px; justify-content:center; flex-wrap:wrap; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #5577ee); color:#08090c; border:none; border-radius: 12px;
+    padding: 14px 26px; font-size: 15px; font-weight: 800; box-shadow: 0 8px 24px rgba(108,140,255,0.25);
+  }
+  .btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 26px; font-size: 15px; font-weight: 700;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  /* ---- Section headers ---- */
+  .section-eyebrow { font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 8px; }
+  .section-title { font-size: 28px; margin: 0 0 12px; letter-spacing:-0.01em; }
+  .section-sub { color: var(--muted); font-size: 15px; max-width: 560px; margin: 0 0 40px; line-height:1.6; }
+  .section-header.center { text-align:center; }
+  .section-header.center .section-sub { margin-left:auto; margin-right:auto; }
+
+  /* ---- How it works ---- */
+  .how-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 820px) { .how-grid { grid-template-columns: 1fr; } }
+  .how-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; }
+  .how-card .icon { font-size: 30px; margin-bottom: 14px; }
+  .how-card h3 { font-size: 16.5px; margin: 0 0 8px; }
+  .how-card p { color: var(--muted); font-size: 14px; line-height:1.6; margin:0; }
+
+  /* ---- Demo section / widget (functional) ---- */
+  .demo-section { background: linear-gradient(180deg, rgba(108,140,255,0.04), transparent 200px); }
+  .demo-frame { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+  .demo-toolbar { display:flex; justify-content:flex-end; margin-bottom: 18px; }
+  .cart-pill {
+    display:flex; align-items:center; gap:8px;
+    background: var(--panel-2); border:1px solid var(--border); border-radius: 999px;
+    padding: 8px 16px; font-size: 13px; font-weight:600;
+  }
+  .cart-pill .count { background: var(--accent); color:#08090c; border-radius:999px; padding:1px 8px; font-size:12px; }
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+  .grid-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 6px 0 12px; }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+  .product-card {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; text-align: left; color: var(--text); transition: border-color .15s, transform .15s;
+  }
+  .product-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .product-card .emoji { font-size: 30px; }
+  .product-card .title { font-size: 13px; font-weight: 600; margin: 8px 0 4px; line-height: 1.3; min-height: 34px; }
+  .product-card .price { font-size: 13px; color: var(--accent-2); font-weight: 700; }
+  .detail-panel {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px; margin-top: 18px; display:none;
+  }
+  .detail-panel.active { display:block; }
+  .detail-top { display:flex; gap: 20px; align-items:flex-start; flex-wrap:wrap; }
+  .detail-emoji { font-size: 64px; background: var(--panel); border-radius: var(--radius); padding: 20px 26px; }
+  .detail-info h2 { margin: 0 0 8px; font-size: 20px; }
+  .detail-info .desc { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 460px; margin-bottom: 10px;}
+  .detail-info .price { font-size: 22px; font-weight: 800; color: var(--accent-2); margin-bottom: 12px; }
+  .add-btn {
+    background: var(--accent); color: #08090c; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700; font-size: 14px;
+  }
+  .add-btn:hover { filter: brightness(1.08); }
+  .reco-section { margin-top: 26px; padding-top: 22px; border-top: 1px dashed var(--border); }
+  .reco-header { display:flex; align-items:center; gap: 8px; margin-bottom: 4px; }
+  .reco-header .ai-tag {
+    font-size: 11px; font-weight: 700; letter-spacing:.04em; text-transform:uppercase;
+    background: rgba(108,140,255,0.15); color: var(--accent); padding: 3px 8px; border-radius: 6px;
+  }
+  .reco-title { font-size: 15px; font-weight: 700; }
+  .reco-sub { color: var(--muted); font-size: 12.5px; margin: 2px 0 12px; }
+  .reco-row { display:flex; gap: 12px; flex-wrap:wrap; margin-bottom: 20px; }
+  .reco-card {
+    width: 160px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; flex-shrink:0;
+  }
+  .reco-card .emoji { font-size: 26px; }
+  .reco-card .title { font-size: 12px; font-weight:600; margin: 6px 0 4px; min-height: 30px; line-height:1.3; }
+  .reco-card .price { font-size: 12.5px; color: var(--accent-2); font-weight:700; margin-bottom: 8px; }
+  .mini-add {
+    width:100%; background: transparent; border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 8px; padding: 6px 0; font-size: 12px; font-weight:700;
+  }
+  .mini-add:hover { background: var(--accent); color:#08090c; }
+  .mini-add.added { border-color: var(--accent-2); color: var(--accent-2); }
+  .empty-reco { color: var(--muted); font-size: 13px; font-style: italic; }
+  .sidebar { position: sticky; top: 90px; }
+  .cart-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .cart-box h3 { margin: 0 0 12px; font-size: 15px; }
+  .cart-item { display:flex; justify-content:space-between; align-items:center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+  .cart-item .name { color: var(--text); }
+  .cart-item .tag-ai { font-size: 10px; color: var(--accent); border:1px solid var(--accent); border-radius:5px; padding:1px 5px; margin-left:6px; }
+  .cart-item .p { color: var(--muted); white-space:nowrap; }
+  .cart-empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+  .cart-totals { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; }
+  .cart-totals .row { display:flex; justify-content:space-between; margin-bottom: 6px; }
+  .cart-totals .grand { font-size: 16px; font-weight: 800; margin-top: 8px; }
+  .uplift-box {
+    margin-top: 14px; background: rgba(53,212,147,0.1); border: 1px solid rgba(53,212,147,0.35);
+    border-radius: 10px; padding: 12px; font-size: 12.5px; color: var(--accent-2); line-height:1.5;
+  }
+  .uplift-box b { font-size: 15px; display:block; }
+
+  /* ---- Pricing ---- */
+  .pricing-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 900px) { .pricing-grid { grid-template-columns: 1fr; } }
+  .price-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; position:relative; }
+  .price-card.highlight { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 20px 50px rgba(108,140,255,0.12); }
+  .price-tag { position:absolute; top: -12px; right: 20px; background: var(--accent); color:#08090c; font-size: 11px; font-weight:800; padding: 4px 10px; border-radius: 999px; }
+  .price-card .plan-name { font-size: 15px; font-weight:700; color: var(--muted); margin-bottom: 10px; }
+  .price-card .plan-price { font-size: 32px; font-weight:800; margin-bottom: 4px; }
+  .price-card .plan-period { font-size: 13px; color: var(--muted); font-weight:600; }
+  .price-card .plan-desc { color: var(--muted); font-size: 13.5px; margin: 10px 0 20px; line-height:1.5; }
+  .price-card ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap: 10px; }
+  .price-card li { font-size: 13.5px; display:flex; align-items:flex-start; gap: 8px; }
+  .price-card li:before { content: "✓"; color: var(--accent-2); font-weight:800; }
+
+  /* ---- Contact ---- */
+  .contact-section { text-align:center; }
+  .contact-box {
+    background: linear-gradient(135deg, rgba(108,140,255,0.12), rgba(53,212,147,0.08));
+    border: 1px solid var(--border); border-radius: 20px; padding: 50px 30px;
+  }
+  .contact-box h2 { font-size: 26px; margin: 0 0 12px; }
+  .contact-box p { color: var(--muted); font-size: 15px; max-width: 520px; margin: 0 auto 26px; line-height:1.6; }
+  .contact-btn {
+    display:inline-block; background: var(--accent); color:#08090c; text-decoration:none;
+    border-radius: 12px; padding: 14px 30px; font-size: 15px; font-weight: 800;
+  }
+  .contact-btn:hover { filter: brightness(1.06); }
+
+  footer { text-align:center; color: var(--muted); font-size: 12.5px; padding: 30px 24px 50px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="logo-dot"></span><span>TeknoMarket AI</span></div>
+  <div class="nav-links">
+    <a href="#how" id="nav-how">Nasıl Çalışır</a>
+    <a href="#demo" id="nav-demo">Canlı Demo</a>
+    <a href="#pricing" id="nav-pricing">Fiyatlandırma</a>
+    <a href="#contact" id="nav-contact">İletişim</a>
+  </div>
+  <div class="nav-right">
+    <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
+    <button class="nav-cta" onclick="scrollToId('demo')" id="nav-cta-btn">Demoyu Dene</button>
+  </div>
+</nav>
+
+<section class="hero-section">
+  <div class="hero-badge" id="hero-badge">🚀 Yeni Lansman — İlk 10 mağazaya özel fiyat</div>
+  <h1 id="hero-title">Mağazanıza AI destekli ürün önerisi ekleyin, sepet tutarını büyütün</h1>
+  <p class="hero-sub" id="hero-sub">Ziyaretçi bir ürüne baktığında, AI sıkça birlikte alınan ve benzer ürünleri otomatik önerir. Kurulum tek satır kod, entegrasyon birkaç dakika sürer.</p>
+  <div class="hero-ctas">
+    <button class="btn-primary" onclick="scrollToId('demo')" id="hero-cta-primary">Canlı Demoyu Dene</button>
+    <button class="btn-secondary" onclick="scrollToId('pricing')" id="hero-cta-secondary">Fiyatlandırmayı Gör</button>
+  </div>
+</section>
+
+<section id="how">
+  <div class="section-header center">
+    <div class="section-eyebrow" id="how-eyebrow">Süreç</div>
+    <div class="section-title" id="how-title">Nasıl Çalışır</div>
+    <div class="section-sub" id="how-sub">Üç adımda kurulur, kod bilgisi gerekmez.</div>
+  </div>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="icon">📦</div>
+      <h3 id="how1-title">1. Kataloğunu Bağla</h3>
+      <p id="how1-desc">Ürün listeni CSV olarak yükle ya da mağaza platformunla senkronize et.</p>
+    </div>
+    <div class="how-card">
+      <div class="icon">🤖</div>
+      <h3 id="how2-title">2. AI Otomatik Eşleştirir</h3>
+      <p id="how2-desc">Ürünler arasındaki ilişkiyi analiz eder, hangi ürünlerin birlikte satılacağını belirler.</p>
+    </div>
+    <div class="how-card">
+      <div class="icon">⚡</div>
+      <h3 id="how3-title">3. Tek Satır Kodla Ekle</h3>
+      <p id="how3-desc">Script'i sitene yapıştır, widget ürün ve sepet sayfalarında otomatik çalışır.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demo-section" id="demo">
+  <div class="section-header center">
+    <div class="section-eyebrow" id="demo-eyebrow">Kanıt</div>
+    <div class="section-title" id="demo-title">Canlı Demo</div>
+    <div class="section-sub" id="demo-sub">Aşağıda gerçek zamanlı çalışan widget'ı deneyebilirsin — bir ürüne tıkla, AI önerilerini gör, sepete ekle.</div>
+  </div>
+
+  <div class="demo-frame">
+    <div class="demo-toolbar">
+      <div class="cart-pill">🛒 <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span></div>
+    </div>
+    <div class="layout">
+      <div>
+        <div class="grid-title" id="grid-title">Ürünler</div>
+        <div class="product-grid" id="product-grid"></div>
+        <div class="detail-panel" id="detail-panel"></div>
+      </div>
+      <div class="sidebar">
+        <div class="cart-box">
+          <h3 id="cart-title">Sepetim</h3>
+          <div id="cart-items"><div class="cart-empty" id="cart-empty-text">Sepet boş. Bir ürüne tıkla ve ekle.</div></div>
+          <div class="cart-totals">
+            <div class="row"><span id="label-ana">Ana ürünler</span><span id="total-main">₺0</span></div>
+            <div class="row"><span id="label-ai">AI önerisiyle eklenen</span><span id="total-ai">₺0</span></div>
+            <div class="row grand"><span id="label-toplam">Toplam</span><span id="total-grand">₺0</span></div>
+          </div>
+          <div class="uplift-box" id="uplift-box" style="display:none;">
+            <b id="uplift-pct">+0%</b>
+            <span id="uplift-text">AI önerileri sayesinde sepet büyüklüğü arttı.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="section-header center">
+    <div class="section-eyebrow" id="pricing-eyebrow">Fiyatlandırma</div>
+    <div class="section-title" id="pricing-title">Basit, Şeffaf Fiyatlandırma</div>
+    <div class="section-sub" id="pricing-sub">Gizli ücret yok. İstediğin zaman iptal edebilirsin.</div>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="plan-name" id="plan1-name">Başlangıç</div>
+      <div class="plan-price">₺499</div>
+      <div class="plan-period" id="plan1-period">/ay</div>
+      <div class="plan-desc" id="plan1-desc">≤200 ürünlü mağazalar için</div>
+      <ul id="plan1-features">
+        <li>Benzer ürün önerisi</li>
+        <li>Sıkça birlikte alınanlar</li>
+        <li>E-posta destek</li>
+      </ul>
+    </div>
+    <div class="price-card highlight">
+      <div class="price-tag" id="plan2-tag">Önerilen</div>
+      <div class="plan-name" id="plan2-name">Büyüme</div>
+      <div class="plan-price">₺1.499</div>
+      <div class="plan-period" id="plan2-period">/ay</div>
+      <div class="plan-desc" id="plan2-desc">200-2000 ürünlü mağazalar için</div>
+      <ul id="plan2-features">
+        <li>Başlangıç'taki her şey</li>
+        <li>Öncelikli destek</li>
+        <li>Özel kategori kuralları</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <div class="plan-name" id="plan3-name">Kurumsal</div>
+      <div class="plan-price" id="plan3-price">Teklif Al</div>
+      <div class="plan-period"></div>
+      <div class="plan-desc" id="plan3-desc">2000+ ürün, Shopify/global mağazalar</div>
+      <ul id="plan3-features">
+        <li>Özel entegrasyon</li>
+        <li>SLA destekli hizmet</li>
+        <li>Çoklu mağaza yönetimi</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="contact-section" id="contact">
+  <div class="contact-box">
+    <h2 id="contact-title">İlk 10 Mağazaya Özel Fiyat</h2>
+    <p id="contact-sub">Erken katılan mağazalara özel fiyat ve öncelikli kurulum desteği veriyoruz. Ürününü/kataloğunu paylaş, sana özel demoyu birlikte hazırlayalım.</p>
+    <a class="contact-btn" id="contact-btn" href="mailto:destanozgen@gmail.com?subject=AI%20%C3%9Cr%C3%BCn%20%C3%96nerisi%20Widget%20-%20Demo%20Talebi">Bize Ulaş</a>
+  </div>
+</section>
+
+<footer id="footer-text">Bu bir tanıtım/demo sayfasıdır. Ürün verisi örnektir; gerçek entegrasyon, mağaza kataloğuna göre özelleştirilir.</footer>
+
+<script>
+const PRODUCTS = __PRODUCTS_JSON__;
+const RECS = __RECS_JSON__;
+
+let lang = "tr";
+let cart = []; // {id, source: 'main'|'ai'}
+
+const t = {
+  tr: {
+    navHow: "Nasıl Çalışır", navDemo: "Canlı Demo", navPricing: "Fiyatlandırma", navContact: "İletişim", navCta: "Demoyu Dene",
+    heroBadge: "🚀 Yeni Lansman — İlk 10 mağazaya özel fiyat",
+    heroTitle: "Mağazanıza AI destekli ürün önerisi ekleyin, sepet tutarını büyütün",
+    heroSub: "Ziyaretçi bir ürüne baktığında, AI sıkça birlikte alınan ve benzer ürünleri otomatik önerir. Kurulum tek satır kod, entegrasyon birkaç dakika sürer.",
+    heroCtaPrimary: "Canlı Demoyu Dene", heroCtaSecondary: "Fiyatlandırmayı Gör",
+    howEyebrow: "Süreç", howTitle: "Nasıl Çalışır", howSub: "Üç adımda kurulur, kod bilgisi gerekmez.",
+    how1Title: "1. Kataloğunu Bağla", how1Desc: "Ürün listeni CSV olarak yükle ya da mağaza platformunla senkronize et.",
+    how2Title: "2. AI Otomatik Eşleştirir", how2Desc: "Ürünler arasındaki ilişkiyi analiz eder, hangi ürünlerin birlikte satılacağını belirler.",
+    how3Title: "3. Tek Satır Kodla Ekle", how3Desc: "Script'i sitene yapıştır, widget ürün ve sepet sayfalarında otomatik çalışır.",
+    demoEyebrow: "Kanıt", demoTitle: "Canlı Demo", demoSub: "Aşağıda gerçek zamanlı çalışan widget'ı deneyebilirsin — bir ürüne tıkla, AI önerilerini gör, sepete ekle.",
+    cartLabel: "Sepet", gridTitle: "Ürünler", cartTitle: "Sepetim", cartEmpty: "Sepet boş. Bir ürüne tıkla ve ekle.",
+    labelAna: "Ana ürünler", labelAi: "AI önerisiyle eklenen", labelToplam: "Toplam",
+    addBtn: "Sepete Ekle", added: "Eklendi ✓", complementaryTitle: "Sıkça Birlikte Alınanlar", complementarySub: "AI, bu ürünle sıklıkla birlikte satın alınan tamamlayıcı ürünleri öneriyor.",
+    similarTitle: "Benzer Ürünler", similarSub: "Aynı kategoriden alternatifler.",
+    noReco: "Bu ürün için yeterli veri yok (demo kataloğu küçük).", aiTag: "AI",
+    pricingEyebrow: "Fiyatlandırma", pricingTitle: "Basit, Şeffaf Fiyatlandırma", pricingSub: "Gizli ücret yok. İstediğin zaman iptal edebilirsin.",
+    plan1Name: "Başlangıç", plan1Period: "/ay", plan1Desc: "≤200 ürünlü mağazalar için", plan1Features: ["Benzer ürün önerisi","Sıkça birlikte alınanlar","E-posta destek"],
+    plan2Tag: "Önerilen", plan2Name: "Büyüme", plan2Period: "/ay", plan2Desc: "200-2000 ürünlü mağazalar için", plan2Features: ["Başlangıç'taki her şey","Öncelikli destek","Özel kategori kuralları"],
+    plan3Name: "Kurumsal", plan3Price: "Teklif Al", plan3Desc: "2000+ ürün, Shopify/global mağazalar", plan3Features: ["Özel entegrasyon","SLA destekli hizmet","Çoklu mağaza yönetimi"],
+    contactTitle: "İlk 10 Mağazaya Özel Fiyat", contactSub: "Erken katılan mağazalara özel fiyat ve öncelikli kurulum desteği veriyoruz. Ürününü/kataloğunu paylaş, sana özel demoyu birlikte hazırlayalım.", contactBtn: "Bize Ulaş",
+    footer: "Bu bir tanıtım/demo sayfasıdır. Ürün verisi örnektir; gerçek entegrasyon, mağaza kataloğuna göre özelleştirilir.",
+    upliftText: (pct) => `AI önerileri sayesinde sepet büyüklüğü %${pct} arttı.`,
+  },
+  en: {
+    navHow: "How It Works", navDemo: "Live Demo", navPricing: "Pricing", navContact: "Contact", navCta: "Try the Demo",
+    heroBadge: "🚀 New Launch — Special pricing for the first 10 stores",
+    heroTitle: "Add AI-powered product recommendations to your store, grow your average cart size",
+    heroSub: "When a visitor views a product, AI automatically suggests frequently bought together and similar items. Setup is one line of code, integration takes minutes.",
+    heroCtaPrimary: "Try the Live Demo", heroCtaSecondary: "See Pricing",
+    howEyebrow: "Process", howTitle: "How It Works", howSub: "Set up in three steps, no coding required.",
+    how1Title: "1. Connect Your Catalog", how1Desc: "Upload your product list as CSV or sync with your store platform.",
+    how2Title: "2. AI Matches Automatically", how2Desc: "Analyzes relationships between products to determine what sells together.",
+    how3Title: "3. Add With One Line of Code", how3Desc: "Paste the script into your site — the widget runs automatically on product and cart pages.",
+    demoEyebrow: "Proof", demoTitle: "Live Demo", demoSub: "Try the fully working widget below — click a product, see the AI suggestions, add to cart.",
+    cartLabel: "Cart", gridTitle: "Products", cartTitle: "My Cart", cartEmpty: "Cart is empty. Click a product and add it.",
+    labelAna: "Main products", labelAi: "Added via AI suggestion", labelToplam: "Total",
+    addBtn: "Add to Cart", added: "Added ✓", complementaryTitle: "Frequently Bought Together", complementarySub: "AI suggests complementary products often purchased with this one.",
+    similarTitle: "Similar Products", similarSub: "Alternatives from the same category.",
+    noReco: "Not enough data for this product (small demo catalog).", aiTag: "AI",
+    pricingEyebrow: "Pricing", pricingTitle: "Simple, Transparent Pricing", pricingSub: "No hidden fees. Cancel anytime.",
+    plan1Name: "Starter", plan1Period: "/mo", plan1Desc: "For stores with ≤200 products", plan1Features: ["Similar product suggestions","Frequently bought together","Email support"],
+    plan2Tag: "Recommended", plan2Name: "Growth", plan2Period: "/mo", plan2Desc: "For stores with 200-2000 products", plan2Features: ["Everything in Starter","Priority support","Custom category rules"],
+    plan3Name: "Enterprise", plan3Price: "Get a Quote", plan3Desc: "2000+ products, Shopify/global stores", plan3Features: ["Custom integration","SLA-backed support","Multi-store management"],
+    contactTitle: "Special Pricing for the First 10 Stores", contactSub: "Early adopters get special pricing and priority setup support. Share your product/catalog and let's build your custom demo together.", contactBtn: "Get in Touch",
+    footer: "This is a promotional/demo page. Product data is sample data; real integration is customized to your store catalog.",
+    upliftText: (pct) => `Cart size increased by ${pct}% thanks to AI suggestions.`,
+  }
+};
+
+function fmtPrice(n) {
+  return lang === "tr" ? `₺${n.toLocaleString('tr-TR')}` : `$${(n/30).toFixed(2)}`;
+  // rough TRY->USD illustrative conversion for the EN/global view
+}
+
+function getProduct(id) { return PRODUCTS.find(p => p.id === id); }
+
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setListItems(id, items) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = items.map(i => `<li>${i}</li>`).join('');
+}
+
+function renderStaticText() {
+  const s = t[lang];
+
+  setText('nav-how', s.navHow); setText('nav-demo', s.navDemo); setText('nav-pricing', s.navPricing); setText('nav-contact', s.navContact);
+  setText('nav-cta-btn', s.navCta);
+
+  setText('hero-badge', s.heroBadge); setText('hero-title', s.heroTitle); setText('hero-sub', s.heroSub);
+  setText('hero-cta-primary', s.heroCtaPrimary); setText('hero-cta-secondary', s.heroCtaSecondary);
+
+  setText('how-eyebrow', s.howEyebrow); setText('how-title', s.howTitle); setText('how-sub', s.howSub);
+  setText('how1-title', s.how1Title); setText('how1-desc', s.how1Desc);
+  setText('how2-title', s.how2Title); setText('how2-desc', s.how2Desc);
+  setText('how3-title', s.how3Title); setText('how3-desc', s.how3Desc);
+
+  setText('demo-eyebrow', s.demoEyebrow); setText('demo-title', s.demoTitle); setText('demo-sub', s.demoSub);
+  setText('cart-label', s.cartLabel); setText('grid-title', s.gridTitle); setText('cart-title', s.cartTitle);
+  const emptyEl = document.getElementById('cart-empty-text');
+  if (emptyEl) emptyEl.textContent = s.cartEmpty; // element is replaced once cart has items, so it may not exist
+  setText('label-ana', s.labelAna); setText('label-ai', s.labelAi); setText('label-toplam', s.labelToplam);
+
+  setText('pricing-eyebrow', s.pricingEyebrow); setText('pricing-title', s.pricingTitle); setText('pricing-sub', s.pricingSub);
+  setText('plan1-name', s.plan1Name); setText('plan1-period', s.plan1Period); setText('plan1-desc', s.plan1Desc); setListItems('plan1-features', s.plan1Features);
+  setText('plan2-tag', s.plan2Tag); setText('plan2-name', s.plan2Name); setText('plan2-period', s.plan2Period); setText('plan2-desc', s.plan2Desc); setListItems('plan2-features', s.plan2Features);
+  setText('plan3-name', s.plan3Name); setText('plan3-price', s.plan3Price); setText('plan3-desc', s.plan3Desc); setListItems('plan3-features', s.plan3Features);
+
+  setText('contact-title', s.contactTitle); setText('contact-sub', s.contactSub); setText('contact-btn', s.contactBtn);
+  setText('footer-text', s.footer);
+
+  document.getElementById('lang-btn').textContent = lang === 'tr' ? 'EN' : 'TR';
+  document.documentElement.lang = lang;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = '';
+  PRODUCTS.forEach(p => {
+    const card = document.createElement('button');
+    card.className = 'product-card';
+    card.onclick = () => openDetail(p.id);
+    card.innerHTML = `
+      <div class="emoji">${p.img}</div>
+      <div class="title">${lang === 'tr' ? p.title_tr : p.title_en}</div>
+      <div class="price">${fmtPrice(p.price)}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function recoCardHtml(p) {
+  const s = t[lang];
+  const inCart = cart.some(c => c.id === p.id);
+  return `
+    <div class="reco-card">
+      <div class="emoji">${p.img}</div>
+      <div class="title">${lang === 'tr' ? p.title_tr : p.title_en}</div>
+      <div class="price">${fmtPrice(p.price)}</div>
+      <button class="mini-add ${inCart ? 'added' : ''}" onclick="addToCart('${p.id}','ai')">${inCart ? s.added : s.addBtn}</button>
+    </div>
+  `;
+}
+
+function openDetail(id) {
+  const p = getProduct(id);
+  const s = t[lang];
+  const rec = RECS[id] || { similar: [], complementary: [] };
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('active');
+
+  const complementaryProducts = rec.complementary.map(getProduct).filter(Boolean);
+  const similarProducts = rec.similar.map(getProduct).filter(Boolean);
+
+  panel.innerHTML = `
+    <div class="detail-top">
+      <div class="detail-emoji">${p.img}</div>
+      <div class="detail-info">
+        <h2>${lang === 'tr' ? p.title_tr : p.title_en}</h2>
+        <div class="desc">${lang === 'tr' ? p.desc_tr : p.desc_en}</div>
+        <div class="price">${fmtPrice(p.price)}</div>
+        <button class="add-btn" onclick="addToCart('${p.id}','main')">${s.addBtn}</button>
+      </div>
+    </div>
+
+    <div class="reco-section">
+      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.complementaryTitle}</span></div>
+      <div class="reco-sub">${s.complementarySub}</div>
+      <div class="reco-row">
+        ${complementaryProducts.length ? complementaryProducts.map(cp => recoCardHtml(cp)).join('') : `<div class="empty-reco">${s.noReco}</div>`}
+      </div>
+
+      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.similarTitle}</span></div>
+      <div class="reco-sub">${s.similarSub}</div>
+      <div class="reco-row">
+        ${similarProducts.length ? similarProducts.map(cp => recoCardHtml(cp)).join('') : `<div class="empty-reco">${s.noReco}</div>`}
+      </div>
+    </div>
+  `;
+  if (typeof panel.scrollIntoView === 'function') {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function addToCart(id, source) {
+  if (cart.some(c => c.id === id)) return;
+  cart.push({ id, source });
+  renderCart();
+  const panel = document.getElementById('detail-panel');
+  if (panel.classList.contains('active')) {
+    const currentId = panel.querySelector('.add-btn')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if (currentId) openDetail(currentId);
+  }
+}
+
+function renderCart() {
+  const s = t[lang];
+  const list = document.getElementById('cart-items');
+  document.getElementById('cart-count').textContent = cart.length;
+
+  if (cart.length === 0) {
+    list.innerHTML = `<div class="cart-empty">${s.cartEmpty}</div>`;
+  } else {
+    list.innerHTML = cart.map(c => {
+      const p = getProduct(c.id);
+      return `<div class="cart-item">
+        <span class="name">${lang === 'tr' ? p.title_tr : p.title_en}${c.source === 'ai' ? `<span class="tag-ai">${s.aiTag}</span>` : ''}</span>
+        <span class="p">${fmtPrice(p.price)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const mainTotal = cart.filter(c => c.source === 'main').reduce((sum, c) => sum + getProduct(c.id).price, 0);
+  const aiTotal = cart.filter(c => c.source === 'ai').reduce((sum, c) => sum + getProduct(c.id).price, 0);
+  const grand = mainTotal + aiTotal;
+
+  document.getElementById('total-main').textContent = fmtPrice(mainTotal);
+  document.getElementById('total-ai').textContent = fmtPrice(aiTotal);
+  document.getElementById('total-grand').textContent = fmtPrice(grand);
+
+  const uplift = document.getElementById('uplift-box');
+  if (mainTotal > 0 && aiTotal > 0) {
+    const pct = Math.round((aiTotal / mainTotal) * 100);
+    uplift.style.display = 'block';
+    document.getElementById('uplift-pct').textContent = `+${pct}%`;
+    document.getElementById('uplift-text').textContent = s.upliftText(pct);
+  } else {
+    uplift.style.display = 'none';
+  }
+}
+
+function toggleLang() {
+  lang = lang === 'tr' ? 'en' : 'tr';
+  renderStaticText();
+  renderGrid();
+  renderCart();
+  const panel = document.getElementById('detail-panel');
+  if (panel.classList.contains('active')) {
+    const anyBtn = panel.querySelector('.add-btn');
+    const currentId = anyBtn?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if (currentId) openDetail(currentId);
+  }
+}
+
+renderStaticText();
+renderGrid();
+renderCart();
+</script>
+</body>
+</html>
