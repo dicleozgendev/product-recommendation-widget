@@ -23,11 +23,16 @@
   .refresh { background: var(--accent); border:none; color:white; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor:pointer; }
   .note { background:#1b1420; border:1px solid #382a4a; color:#c9b8e8; font-size:12.5px; padding:10px 14px; border-radius:8px; margin-bottom:24px; }
   a { color: var(--accent); }
+  .title-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .badge { background:#3a2410; border:1px solid #6b4a1e; color:#f0b429; font-size:11px; font-weight:700; letter-spacing:.04em; padding:3px 9px; border-radius:999px; }
 </style>
 </head>
 <body>
-  <h1>Widget Analiz Paneli</h1>
-  <div class="sub">Öneri widget'ının gerçek zamanlı etkisi — gerçekten loglanmış olaylardan hesaplanır.</div>
+  <div class="title-row">
+    <h1 style="margin:0;">Widget Analiz Paneli</h1>
+    <span class="badge">DEMO / PROTOTİP</span>
+  </div>
+  <div class="sub">Öneri widget'ının gerçek zamanlı etkisi — gerçekten loglanmış olaylardan hesaplanır. Bu panel tek mağazalık bir prototip; kimlik doğrulama yok, gerçek müşteri verisi tutmaz.</div>
 
   <div class="note">
     Bu panel, bu sunucu çalışırken <a href="/demo.html">demo.html</a>'de yapılan gerçek etkileşimlerden (ürün görüntüleme, öneri tıklama, sepete ekleme) veri okur. Sayılar sıfırsa, önce demoyu birkaç kez gezip birkaç ürün ekleyin, sonra "Yenile"ye basın.
