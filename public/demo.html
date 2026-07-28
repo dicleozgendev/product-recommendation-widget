@@ -103,11 +103,17 @@
     display:flex; align-items:center; gap:8px;
     background: var(--panel-2); border:1px solid var(--border); border-radius: 999px;
     padding: 8px 16px; font-size: 13px; font-weight:600; color: var(--text);
+    cursor: pointer;
   }
+  .cart-pill:hover { border-color: var(--accent); }
   .cart-pill .cart-icon { color: var(--text); flex-shrink: 0; }
   .cart-pill .count { background: var(--accent); color:#08090c; border-radius:999px; padding:1px 8px; font-size:12px; }
+  .cart-pill-total { color: var(--accent-2, #22c55e); font-weight: 700; }
   .layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { order: -1; position: static; margin-bottom: 8px; }
+  }
   .grid-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 6px 0 12px; }
   .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
   .product-card {
@@ -266,9 +272,10 @@
 
   <div class="demo-frame">
     <div class="demo-toolbar">
-      <div class="cart-pill">
+      <div class="cart-pill" id="cart-pill" onclick="scrollToCart()" role="button" tabindex="0">
         <svg class="cart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
         <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span>
+        <span class="cart-pill-total" id="cart-pill-total"></span>
       </div>
     </div>
     <div class="layout">
@@ -989,6 +996,13 @@ function openDetail(id) {
   }
 }
 
+function scrollToCart() {
+  const box = document.querySelector('.cart-box');
+  if (box && typeof box.scrollIntoView === 'function') {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
 function addToCart(id, source) {
   if (cart.some(c => c.id === id)) return;
   cart.push({ id, source });
@@ -1026,6 +1040,7 @@ function renderCart() {
   document.getElementById('total-main').textContent = fmtPrice(mainTotal);
   document.getElementById('total-ai').textContent = fmtPrice(aiTotal);
   document.getElementById('total-grand').textContent = fmtPrice(grand);
+  document.getElementById('cart-pill-total').textContent = grand > 0 ? fmtPrice(grand) : '';
 
   const uplift = document.getElementById('uplift-box');
   if (mainTotal > 0 && aiTotal > 0) {
