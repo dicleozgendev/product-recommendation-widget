@@ -102,8 +102,9 @@
   .cart-pill {
     display:flex; align-items:center; gap:8px;
     background: var(--panel-2); border:1px solid var(--border); border-radius: 999px;
-    padding: 8px 16px; font-size: 13px; font-weight:600;
+    padding: 8px 16px; font-size: 13px; font-weight:600; color: var(--text);
   }
+  .cart-pill .cart-icon { color: var(--text); flex-shrink: 0; }
   .cart-pill .count { background: var(--accent); color:#08090c; border-radius:999px; padding:1px 8px; font-size:12px; }
   .layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
   @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
@@ -129,9 +130,11 @@
   .detail-info .price { font-size: 22px; font-weight: 800; color: var(--accent-2); margin-bottom: 12px; }
   .add-btn {
     background: var(--accent); color: #08090c; border: none; border-radius: 10px;
-    padding: 10px 18px; font-weight: 700; font-size: 14px;
+    padding: 10px 18px; font-weight: 700; font-size: 14px; cursor: pointer;
   }
   .add-btn:hover { filter: brightness(1.08); }
+  .add-btn.added { background: transparent; border: 1.5px solid var(--accent-2); color: var(--accent-2); cursor: default; }
+  .add-btn.added:hover { filter: none; }
   .reco-section { margin-top: 26px; padding-top: 22px; border-top: 1px dashed var(--border); }
   .reco-header { display:flex; align-items:center; gap: 8px; margin-bottom: 4px; }
   .reco-header .ai-tag {
@@ -263,7 +266,10 @@
 
   <div class="demo-frame">
     <div class="demo-toolbar">
-      <div class="cart-pill">🛒 <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span></div>
+      <div class="cart-pill">
+        <svg class="cart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span>
+      </div>
     </div>
     <div class="layout">
       <div>
@@ -299,7 +305,7 @@
   <div class="pricing-grid">
     <div class="price-card">
       <div class="plan-name" id="plan1-name">Başlangıç</div>
-      <div class="plan-price">₺499</div>
+      <div class="plan-price" id="plan1-price">₺499</div>
       <div class="plan-period" id="plan1-period">/ay</div>
       <div class="plan-desc" id="plan1-desc">≤200 ürünlü mağazalar için</div>
       <ul id="plan1-features">
@@ -311,7 +317,7 @@
     <div class="price-card highlight">
       <div class="price-tag" id="plan2-tag">Önerilen</div>
       <div class="plan-name" id="plan2-name">Büyüme</div>
-      <div class="plan-price">₺1.499</div>
+      <div class="plan-price" id="plan2-price">₺1.499</div>
       <div class="plan-period" id="plan2-period">/ay</div>
       <div class="plan-desc" id="plan2-desc">200-2000 ürünlü mağazalar için</div>
       <ul id="plan2-features">
@@ -347,9 +353,84 @@
 <script>
 const PRODUCTS = __PRODUCTS_JSON__;
 const RECS = __RECS_JSON__;
+const VECTORS = __VECTORS_JSON__;
 
 let lang = "tr";
 let cart = []; // {id, source: 'main'|'ai'}
+
+// --- Session-based personalization -----------------------------------------
+// In-memory only (resets on page reload) - this is a single-page demo, not a
+// multi-page site, so there's nothing meaningful to persist across visits.
+// Tracks the last few products the visitor looked at, then re-ranks the
+// (larger) candidate pools from RECS toward "what's semantically close to
+// both this product AND what this visitor has been browsing", using the
+// same latent-semantic vectors the build step computed - no extra network
+// calls, no server.
+const RECENTLY_VIEWED_MAX = 5;
+const PERSONALIZATION_HISTORY_WEIGHT = 0.35; // 0 = ignore history, 1 = ignore current product
+let recentlyViewed = []; // ids, most-recent-first, excludes the product currently open
+
+// --- Optional analytics ping --------------------------------------------
+// Best-effort only: demo.html must keep working as a zero-server static
+// file (that's the whole point of the base demo), so this silently no-ops
+// if there's no backend listening (e.g. opened directly via file://, or
+// hosted as a plain static file with no ../server running alongside it).
+// When the small server in ../server IS running, this is what feeds the
+// real numbers shown on /admin.
+const SESSION_ID = Math.random().toString(36).slice(2);
+function track(type, productId, source) {
+  try {
+    fetch('/api/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, productId, source, sessionId: SESSION_ID }),
+    }).catch(() => {});
+  } catch (e) { /* no backend present - that's fine, demo stays static */ }
+}
+
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  if (na === 0 || nb === 0) return 0;
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+
+function averageVector(vecs) {
+  const dim = vecs[0].length;
+  const out = new Array(dim).fill(0);
+  vecs.forEach((v) => v.forEach((val, i) => { out[i] += val / vecs.length; }));
+  return out;
+}
+
+// Builds a "query vector" for the given product, blended with the visitor's
+// recent browsing history (if any). Falls back to the plain product vector
+// on the very first product viewed, since there's no history yet.
+function personalizedQueryVector(currentId) {
+  const currentVec = VECTORS[currentId];
+  const historyIds = recentlyViewed.filter((id) => id !== currentId);
+  if (!currentVec || historyIds.length === 0) return currentVec;
+  const historyVecs = historyIds.map((id) => VECTORS[id]).filter(Boolean);
+  if (historyVecs.length === 0) return currentVec;
+  const historyAvg = averageVector(historyVecs);
+  const w = PERSONALIZATION_HISTORY_WEIGHT;
+  return currentVec.map((v, i) => v * (1 - w) + historyAvg[i] * w);
+}
+
+// Re-ranks a candidate id list by cosine similarity to a query vector, then
+// trims to the display count. If we're missing vectors for some reason,
+// falls back to the original (build-time) order rather than failing.
+function personalizedRerank(candidateIds, queryVec, displayCount) {
+  if (!queryVec) return candidateIds.slice(0, displayCount);
+  return candidateIds
+    .map((id) => ({ id, score: VECTORS[id] ? cosineSim(queryVec, VECTORS[id]) : -1 }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, displayCount)
+    .map((c) => c.id);
+}
 
 const t = {
   tr: {
@@ -368,9 +449,10 @@ const t = {
     addBtn: "Sepete Ekle", added: "Eklendi ✓", complementaryTitle: "Sıkça Birlikte Alınanlar", complementarySub: "AI, bu ürünle sıklıkla birlikte satın alınan tamamlayıcı ürünleri öneriyor.",
     similarTitle: "Benzer Ürünler", similarSub: "Aynı kategoriden alternatifler.",
     noReco: "Bu ürün için yeterli veri yok (demo kataloğu küçük).", aiTag: "AI",
+    personalizedTag: "Kişiselleştirildi", personalizedNote: "Bu sıralama, az önce baktığın ürünlere göre uyarlandı.",
     pricingEyebrow: "Fiyatlandırma", pricingTitle: "Basit, Şeffaf Fiyatlandırma", pricingSub: "Gizli ücret yok. İstediğin zaman iptal edebilirsin.",
-    plan1Name: "Başlangıç", plan1Period: "/ay", plan1Desc: "≤200 ürünlü mağazalar için", plan1Features: ["Benzer ürün önerisi","Sıkça birlikte alınanlar","E-posta destek"],
-    plan2Tag: "Önerilen", plan2Name: "Büyüme", plan2Period: "/ay", plan2Desc: "200-2000 ürünlü mağazalar için", plan2Features: ["Başlangıç'taki her şey","Öncelikli destek","Özel kategori kuralları"],
+    plan1Name: "Başlangıç", plan1Price: "₺499", plan1Period: "/ay", plan1Desc: "≤200 ürünlü mağazalar için", plan1Features: ["Benzer ürün önerisi","Sıkça birlikte alınanlar","E-posta destek"],
+    plan2Tag: "Önerilen", plan2Name: "Büyüme", plan2Price: "₺1.499", plan2Period: "/ay", plan2Desc: "200-2000 ürünlü mağazalar için", plan2Features: ["Başlangıç'taki her şey","Öncelikli destek","Özel kategori kuralları"],
     plan3Name: "Kurumsal", plan3Price: "Teklif Al", plan3Desc: "2000+ ürün, Shopify/global mağazalar", plan3Features: ["Özel entegrasyon","SLA destekli hizmet","Çoklu mağaza yönetimi"],
     contactTitle: "İlk 10 Mağazaya Özel Fiyat", contactSub: "Erken katılan mağazalara özel fiyat ve öncelikli kurulum desteği veriyoruz. Ürününü/kataloğunu paylaş, sana özel demoyu birlikte hazırlayalım.", contactBtn: "Bize Ulaş",
     footer: "Bu bir tanıtım/demo sayfasıdır. Ürün verisi örnektir; gerçek entegrasyon, mağaza kataloğuna göre özelleştirilir.",
@@ -392,9 +474,10 @@ const t = {
     addBtn: "Add to Cart", added: "Added ✓", complementaryTitle: "Frequently Bought Together", complementarySub: "AI suggests complementary products often purchased with this one.",
     similarTitle: "Similar Products", similarSub: "Alternatives from the same category.",
     noReco: "Not enough data for this product (small demo catalog).", aiTag: "AI",
+    personalizedTag: "Personalized", personalizedNote: "This ranking is adapted to what you just viewed.",
     pricingEyebrow: "Pricing", pricingTitle: "Simple, Transparent Pricing", pricingSub: "No hidden fees. Cancel anytime.",
-    plan1Name: "Starter", plan1Period: "/mo", plan1Desc: "For stores with ≤200 products", plan1Features: ["Similar product suggestions","Frequently bought together","Email support"],
-    plan2Tag: "Recommended", plan2Name: "Growth", plan2Period: "/mo", plan2Desc: "For stores with 200-2000 products", plan2Features: ["Everything in Starter","Priority support","Custom category rules"],
+    plan1Name: "Starter", plan1Price: "$16.63", plan1Period: "/mo", plan1Desc: "For stores with ≤200 products", plan1Features: ["Similar product suggestions","Frequently bought together","Email support"],
+    plan2Tag: "Recommended", plan2Name: "Growth", plan2Price: "$49.97", plan2Period: "/mo", plan2Desc: "For stores with 200-2000 products", plan2Features: ["Everything in Starter","Priority support","Custom category rules"],
     plan3Name: "Enterprise", plan3Price: "Get a Quote", plan3Desc: "2000+ products, Shopify/global stores", plan3Features: ["Custom integration","SLA-backed support","Multi-store management"],
     contactTitle: "Special Pricing for the First 10 Stores", contactSub: "Early adopters get special pricing and priority setup support. Share your product/catalog and let's build your custom demo together.", contactBtn: "Get in Touch",
     footer: "This is a promotional/demo page. Product data is sample data; real integration is customized to your store catalog.",
@@ -445,8 +528,8 @@ function renderStaticText() {
   setText('label-ana', s.labelAna); setText('label-ai', s.labelAi); setText('label-toplam', s.labelToplam);
 
   setText('pricing-eyebrow', s.pricingEyebrow); setText('pricing-title', s.pricingTitle); setText('pricing-sub', s.pricingSub);
-  setText('plan1-name', s.plan1Name); setText('plan1-period', s.plan1Period); setText('plan1-desc', s.plan1Desc); setListItems('plan1-features', s.plan1Features);
-  setText('plan2-tag', s.plan2Tag); setText('plan2-name', s.plan2Name); setText('plan2-period', s.plan2Period); setText('plan2-desc', s.plan2Desc); setListItems('plan2-features', s.plan2Features);
+  setText('plan1-name', s.plan1Name); setText('plan1-price', s.plan1Price); setText('plan1-period', s.plan1Period); setText('plan1-desc', s.plan1Desc); setListItems('plan1-features', s.plan1Features);
+  setText('plan2-tag', s.plan2Tag); setText('plan2-name', s.plan2Name); setText('plan2-price', s.plan2Price); setText('plan2-period', s.plan2Period); setText('plan2-desc', s.plan2Desc); setListItems('plan2-features', s.plan2Features);
   setText('plan3-name', s.plan3Name); setText('plan3-price', s.plan3Price); setText('plan3-desc', s.plan3Desc); setListItems('plan3-features', s.plan3Features);
 
   setText('contact-title', s.contactTitle); setText('contact-sub', s.contactSub); setText('contact-btn', s.contactBtn);
@@ -488,13 +571,27 @@ function recoCardHtml(p) {
 function openDetail(id) {
   const p = getProduct(id);
   const s = t[lang];
-  const rec = RECS[id] || { similar: [], complementary: [] };
+  const rec = RECS[id] || { similar: [], complementary: [], similarDisplay: 4, complementaryDisplay: 3 };
   const panel = document.getElementById('detail-panel');
   panel.classList.add('active');
 
-  const complementaryProducts = rec.complementary.map(getProduct).filter(Boolean);
-  const similarProducts = rec.similar.map(getProduct).filter(Boolean);
+  // Personalize BEFORE recording this view, so "recent history" means
+  // "what was viewed before this product", not including it.
+  const isPersonalized = recentlyViewed.filter((v) => v !== id).length > 0;
+  const queryVec = personalizedQueryVector(id);
+  const complementaryIds = personalizedRerank(rec.complementary, queryVec, rec.complementaryDisplay ?? 3);
+  const similarIds = personalizedRerank(rec.similar, queryVec, rec.similarDisplay ?? 4);
 
+  recentlyViewed = [id, ...recentlyViewed.filter((v) => v !== id)].slice(0, RECENTLY_VIEWED_MAX);
+  track('view', id);
+
+  const complementaryProducts = complementaryIds.map(getProduct).filter(Boolean);
+  const similarProducts = similarIds.map(getProduct).filter(Boolean);
+  const personalizedNote = isPersonalized
+    ? `<div class="reco-sub" style="margin-top:-6px;margin-bottom:14px;">${s.personalizedNote}</div>`
+    : '';
+
+  const mainInCart = cart.some(c => c.id === p.id);
   panel.innerHTML = `
     <div class="detail-top">
       <div class="detail-emoji">${p.img}</div>
@@ -502,13 +599,14 @@ function openDetail(id) {
         <h2>${lang === 'tr' ? p.title_tr : p.title_en}</h2>
         <div class="desc">${lang === 'tr' ? p.desc_tr : p.desc_en}</div>
         <div class="price">${fmtPrice(p.price)}</div>
-        <button class="add-btn" onclick="addToCart('${p.id}','main')">${s.addBtn}</button>
+        <button class="add-btn ${mainInCart ? 'added' : ''}" ${mainInCart ? 'disabled' : ''} onclick="addToCart('${p.id}','main')">${mainInCart ? s.added : s.addBtn}</button>
       </div>
     </div>
 
     <div class="reco-section">
-      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.complementaryTitle}</span></div>
+      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.complementaryTitle}</span>${isPersonalized ? `<span class="ai-tag" style="background:var(--accent-2, #16a34a);">${s.personalizedTag}</span>` : ''}</div>
       <div class="reco-sub">${s.complementarySub}</div>
+      ${personalizedNote}
       <div class="reco-row">
         ${complementaryProducts.length ? complementaryProducts.map(cp => recoCardHtml(cp)).join('') : `<div class="empty-reco">${s.noReco}</div>`}
       </div>
@@ -528,6 +626,8 @@ function openDetail(id) {
 function addToCart(id, source) {
   if (cart.some(c => c.id === id)) return;
   cart.push({ id, source });
+  track('add_to_cart', id, source);
+  if (source === 'ai') track('recommendation_click', id, source);
   renderCart();
   const panel = document.getElementById('detail-panel');
   if (panel.classList.contains('active')) {

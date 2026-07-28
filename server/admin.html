@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Widget Analiz Paneli</title>
+<style>
+  :root { --bg:#0b0d12; --panel:#141822; --border:#232838; --text:#eef1f6; --muted:#8b93a7; --accent:#7c5cff; --accent-2:#22c55e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 32px 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 28px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .card .label { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  .card .value { font-size: 26px; font-weight: 800; }
+  .card .value.accent { color: var(--accent-2); }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  section h2 { font-size: 15px; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 8px 0; }
+  .refresh { background: var(--accent); border:none; color:white; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor:pointer; }
+  .note { background:#1b1420; border:1px solid #382a4a; color:#c9b8e8; font-size:12.5px; padding:10px 14px; border-radius:8px; margin-bottom:24px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+  <h1>Widget Analiz Paneli</h1>
+  <div class="sub">Öneri widget'ının gerçek zamanlı etkisi — gerçekten loglanmış olaylardan hesaplanır.</div>
+
+  <div class="note">
+    Bu panel, bu sunucu çalışırken <a href="/demo.html">demo.html</a>'de yapılan gerçek etkileşimlerden (ürün görüntüleme, öneri tıklama, sepete ekleme) veri okur. Sayılar sıfırsa, önce demoyu birkaç kez gezip birkaç ürün ekleyin, sonra "Yenile"ye basın.
+  </div>
+
+  <div class="grid" id="cards"></div>
+
+  <section>
+    <h2>En çok tıklanan öneriler</h2>
+    <table id="top-table">
+      <thead><tr><th>Ürün ID</th><th>Öneri tıklaması</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty" id="top-empty" style="display:none;">Henüz öneri tıklaması loglanmadı.</div>
+  </section>
+
+  <button class="refresh" onclick="load()">Yenile</button>
+
+<script>
+async function load() {
+  const res = await fetch('/api/stats');
+  const s = await res.json();
+
+  const cards = [
+    { label: 'Toplam oturum', value: s.sessions },
+    { label: 'Ürün görüntüleme', value: s.views },
+    { label: 'Öneri tıklaması', value: s.recommendationClicks },
+    { label: 'Sepete ekleme (ana ürün)', value: s.addToCartMain },
+    { label: 'Sepete ekleme (AI önerisi)', value: s.addToCartAi },
+    { label: 'AI kaynaklı sepet artışı', value: '+' + s.upliftPct + '%', accent: true },
+  ];
+  document.getElementById('cards').innerHTML = cards.map(c => `
+    <div class="card">
+      <div class="label">${c.label}</div>
+      <div class="value ${c.accent ? 'accent' : ''}">${c.value}</div>
+    </div>
+  `).join('');
+
+  const tbody = document.querySelector('#top-table tbody');
+  if (s.topRecommended.length) {
+    tbody.innerHTML = s.topRecommended.map(r => `<tr><td>${r.productId}</td><td>${r.clicks}</td></tr>`).join('');
+    document.getElementById('top-table').style.display = 'table';
+    document.getElementById('top-empty').style.display = 'none';
+  } else {
+    document.getElementById('top-table').style.display = 'none';
+    document.getElementById('top-empty').style.display = 'block';
+  }
+}
+load();
+</script>
+</body>
+</html>

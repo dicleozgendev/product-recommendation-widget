@@ -5,11 +5,13 @@ const path = require("path");
 
 const products = fs.readFileSync(path.join(__dirname, "..", "data", "products.json"), "utf8");
 const recs = fs.readFileSync(path.join(__dirname, "..", "data", "recommendations.json"), "utf8");
+const vectors = fs.readFileSync(path.join(__dirname, "..", "data", "vectors.json"), "utf8");
 const template = fs.readFileSync(path.join(__dirname, "demo.template.html"), "utf8");
 
 const output = template
   .replace("__PRODUCTS_JSON__", products.trim())
-  .replace("__RECS_JSON__", recs.trim());
+  .replace("__RECS_JSON__", recs.trim())
+  .replace("__VECTORS_JSON__", vectors.trim());
 
 const outPath = path.join(__dirname, "..", "public", "demo.html");
 fs.writeFileSync(outPath, output);

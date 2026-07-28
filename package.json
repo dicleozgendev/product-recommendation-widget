@@ -5,10 +5,24 @@
   "main": "index.js",
   "scripts": {
     "build": "node build/generate.js && node build/build-demo.js",
-    "test": "node build/test-jsdom.js && node build/test-all-products.js"
+    "test": "node build/test-jsdom.js && node build/test-all-products.js",
+    "server": "node server/index.js"
   },
-  "keywords": ["e-ticaret", "ai", "upsell", "shopify", "recommendation-engine"],
+  "keywords": [
+    "e-ticaret",
+    "ai",
+    "upsell",
+    "shopify",
+    "recommendation-engine"
+  ],
   "author": "",
   "license": "UNLICENSED",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "express": "^5.2.1",
+    "ml-matrix": "^6.14.0"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.0"
+  }
 }

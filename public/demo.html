@@ -102,8 +102,9 @@
   .cart-pill {
     display:flex; align-items:center; gap:8px;
     background: var(--panel-2); border:1px solid var(--border); border-radius: 999px;
-    padding: 8px 16px; font-size: 13px; font-weight:600;
+    padding: 8px 16px; font-size: 13px; font-weight:600; color: var(--text);
   }
+  .cart-pill .cart-icon { color: var(--text); flex-shrink: 0; }
   .cart-pill .count { background: var(--accent); color:#08090c; border-radius:999px; padding:1px 8px; font-size:12px; }
   .layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
   @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
@@ -129,9 +130,11 @@
   .detail-info .price { font-size: 22px; font-weight: 800; color: var(--accent-2); margin-bottom: 12px; }
   .add-btn {
     background: var(--accent); color: #08090c; border: none; border-radius: 10px;
-    padding: 10px 18px; font-weight: 700; font-size: 14px;
+    padding: 10px 18px; font-weight: 700; font-size: 14px; cursor: pointer;
   }
   .add-btn:hover { filter: brightness(1.08); }
+  .add-btn.added { background: transparent; border: 1.5px solid var(--accent-2); color: var(--accent-2); cursor: default; }
+  .add-btn.added:hover { filter: none; }
   .reco-section { margin-top: 26px; padding-top: 22px; border-top: 1px dashed var(--border); }
   .reco-header { display:flex; align-items:center; gap: 8px; margin-bottom: 4px; }
   .reco-header .ai-tag {
@@ -263,7 +266,10 @@
 
   <div class="demo-frame">
     <div class="demo-toolbar">
-      <div class="cart-pill">🛒 <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span></div>
+      <div class="cart-pill">
+        <svg class="cart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span id="cart-label">Sepet</span>: <span class="count" id="cart-count">0</span>
+      </div>
     </div>
     <div class="layout">
       <div>
@@ -299,7 +305,7 @@
   <div class="pricing-grid">
     <div class="price-card">
       <div class="plan-name" id="plan1-name">Başlangıç</div>
-      <div class="plan-price">₺499</div>
+      <div class="plan-price" id="plan1-price">₺499</div>
       <div class="plan-period" id="plan1-period">/ay</div>
       <div class="plan-desc" id="plan1-desc">≤200 ürünlü mağazalar için</div>
       <ul id="plan1-features">
@@ -311,7 +317,7 @@
     <div class="price-card highlight">
       <div class="price-tag" id="plan2-tag">Önerilen</div>
       <div class="plan-name" id="plan2-name">Büyüme</div>
-      <div class="plan-price">₺1.499</div>
+      <div class="plan-price" id="plan2-price">₺1.499</div>
       <div class="plan-period" id="plan2-period">/ay</div>
       <div class="plan-desc" id="plan2-desc">200-2000 ürünlü mağazalar için</div>
       <ul id="plan2-features">
@@ -385,8 +391,12 @@ const RECS = {
     "complementary": [
       "p3",
       "p7",
-      "p6"
-    ]
+      "p6",
+      "p10",
+      "p8"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p2": {
     "similar": [
@@ -394,9 +404,13 @@ const RECS = {
     ],
     "complementary": [
       "p4",
+      "p7",
       "p9",
-      "p7"
-    ]
+      "p10",
+      "p6"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p3": {
     "similar": [
@@ -406,7 +420,9 @@ const RECS = {
       "p1",
       "p2",
       "p5"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p4": {
     "similar": [
@@ -414,17 +430,22 @@ const RECS = {
     ],
     "complementary": [
       "p2",
-      "p1",
-      "p5"
-    ]
+      "p5",
+      "p1"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p5": {
     "similar": [],
     "complementary": [
       "p2",
       "p1",
+      "p4",
       "p3"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p6": {
     "similar": [
@@ -433,18 +454,26 @@ const RECS = {
     "complementary": [
       "p30",
       "p10",
-      "p1"
-    ]
+      "p1",
+      "p2",
+      "p11"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p7": {
     "similar": [
       "p6"
     ],
     "complementary": [
-      "p10",
       "p2",
-      "p1"
-    ]
+      "p1",
+      "p10",
+      "p11",
+      "p30"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p8": {
     "similar": [
@@ -453,8 +482,11 @@ const RECS = {
     "complementary": [
       "p7",
       "p2",
+      "p6",
       "p1"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p9": {
     "similar": [
@@ -463,8 +495,11 @@ const RECS = {
     "complementary": [
       "p2",
       "p7",
-      "p1"
-    ]
+      "p1",
+      "p6"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p10": {
     "similar": [
@@ -473,46 +508,59 @@ const RECS = {
     "complementary": [
       "p7",
       "p6",
-      "p1"
-    ]
+      "p1",
+      "p2",
+      "p30"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p11": {
     "similar": [
       "p10"
     ],
     "complementary": [
+      "p6",
+      "p1",
+      "p2",
       "p7",
-      "p30",
-      "p1"
-    ]
+      "p30"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p12": {
     "similar": [],
     "complementary": [
       "p13",
-      "p15",
-      "p29"
-    ]
+      "p14",
+      "p29",
+      "p15"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p13": {
     "similar": [
-      "p15",
-      "p14"
+      "p15"
     ],
     "complementary": [
       "p12",
       "p29"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p14": {
     "similar": [
-      "p15",
-      "p13"
+      "p15"
     ],
     "complementary": [
       "p12",
       "p29"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p15": {
     "similar": [
@@ -522,14 +570,18 @@ const RECS = {
     "complementary": [
       "p29",
       "p12"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p16": {
     "similar": [],
     "complementary": [
       "p17",
       "p18"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p17": {
     "similar": [
@@ -537,7 +589,9 @@ const RECS = {
     ],
     "complementary": [
       "p16"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p18": {
     "similar": [
@@ -545,7 +599,9 @@ const RECS = {
     ],
     "complementary": [
       "p16"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p19": {
     "similar": [
@@ -553,7 +609,9 @@ const RECS = {
     ],
     "complementary": [
       "p30"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p20": {
     "similar": [
@@ -561,14 +619,18 @@ const RECS = {
     ],
     "complementary": [
       "p30"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p21": {
     "similar": [],
     "complementary": [
       "p23",
       "p22"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p22": {
     "similar": [
@@ -576,7 +638,9 @@ const RECS = {
     ],
     "complementary": [
       "p21"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p23": {
     "similar": [
@@ -584,7 +648,9 @@ const RECS = {
     ],
     "complementary": [
       "p21"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p24": {
     "similar": [],
@@ -592,7 +658,9 @@ const RECS = {
       "p25",
       "p26",
       "p29"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p25": {
     "similar": [
@@ -600,7 +668,9 @@ const RECS = {
     ],
     "complementary": [
       "p24"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p26": {
     "similar": [
@@ -608,39 +678,125 @@ const RECS = {
     ],
     "complementary": [
       "p24"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p27": {
     "similar": [],
     "complementary": [
       "p28"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p28": {
     "similar": [],
     "complementary": [
       "p27"
-    ]
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p29": {
     "similar": [],
     "complementary": [
-      "p24",
-      "p12"
-    ]
+      "p12",
+      "p24"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   },
   "p30": {
     "similar": [],
     "complementary": [
       "p6",
-      "p7",
-      "p10"
-    ]
+      "p10",
+      "p11",
+      "p7"
+    ],
+    "similarDisplay": 4,
+    "complementaryDisplay": 3
   }
 };
+const VECTORS = {"p1":[0.14938,-0.0942,0.15122,0.02518,0.06208,-0.04518,0.13586,-0.05221,0.13028,-0.019,0.02405,0.06595,-0.19422,-0.02127,-0.07716,0.04601,0.01727,0.07283,-0.01537,-0.13052],"p2":[0.1315,-0.08076,0.13891,-0.01152,0.04597,0.02256,0.16393,-0.06483,-0.04714,-0.09678,-0.07787,-0.13235,0.02933,0.00516,-0.02682,-0.11415,-0.01795,-0.02166,-0.03072,-0.11485],"p3":[0.17946,-0.02169,0.21963,0.14065,0.08513,-0.07962,0.20841,0.01324,-0.03533,0.07389,0.12084,0.2301,-0.23123,-0.05971,-0.04622,0.10776,-0.03496,-0.01372,-0.00398,0.12759],"p4":[0.14436,-0.02102,0.15128,0.03993,0.05014,-0.00211,0.27283,-0.06673,-0.19735,-0.11254,-0.0412,-0.15261,0.1286,-0.02663,-0.02285,-0.18195,-0.00264,-0.19203,-0.01452,0.08519],"p5":[0.04602,-0.01995,0.06663,0.08745,0.01073,-0.04905,-0.07103,0.04808,0.02444,0.03051,-0.09505,-0.08633,0.10781,-0.13324,-0.21554,0.11119,-0.01671,0.0194,0.01029,0.01859],"p6":[0.13901,-0.1643,-0.13184,-0.05779,0.08745,-0.11913,0.00171,-0.04328,0.10545,-0.0801,-0.02685,0.08437,0.04997,0.04883,-0.0211,0.01585,0.0132,0.0161,-0.07637,-0.05028],"p7":[0.13689,-0.15656,0.02588,-0.10739,0.10474,0.13547,0.0362,0.05539,0.13611,0.03748,-0.03414,-0.10431,0.01082,0.06238,0.0258,0.01558,-0.07693,0.06655,-0.0509,-0.18862],"p8":[0.09779,-0.0793,0.09547,-0.04963,0.03293,0.10314,-0.03193,-0.01378,-0.13983,-0.07451,-0.03266,0.00421,0.04176,0.05614,0.10294,0.16716,0.00759,0.16448,-0.02227,0.04382],"p9":[0.08549,-0.06271,0.0999,0.00112,0.00755,0.0815,0.03075,-0.04116,-0.16142,-0.12378,-0.06864,-0.04323,0.07254,0.08315,0.14699,0.18111,0.00683,0.21616,0.01512,0.06795],"p10":[0.05895,-0.07505,0.01668,-0.06326,0.02538,0.01702,-0.01469,-0.02144,0.1206,-0.06356,0.06498,0.00105,0.03045,-0.13536,0.06403,-0.01465,0.00465,0.01504,-0.00744,-0.02572],"p11":[0.04311,-0.0547,0.0148,-0.05869,0.01422,0.02546,-0.03721,-0.03423,0.113,-0.09968,0.10425,0.03728,0.07204,-0.39991,0.16329,-0.15653,-0.0683,0.147,0.013,0.09276],"p12":[0.05768,-0.05354,-0.07177,0.17756,-0.18544,0.1656,0.0441,-0.02771,0.0714,-0.05173,-0.03938,0.09813,0.03152,-0.02058,-0.0881,-0.06729,0.07112,0.01402,-0.10905,-0.17914],"p13":[0.10645,-0.1015,-0.12143,0.29582,-0.31568,0.26863,0.0543,-0.02045,0.06286,-0.08719,-0.01785,0.10755,0.04644,0.02691,-0.00799,0.00383,0.05076,-0.01071,0.05702,0.10141],"p14":[0.09447,-0.12892,0.06919,-0.17306,0.03139,0.23799,-0.19709,0.10357,-0.27212,0.07601,-0.08429,0.16688,-0.09283,-0.06052,-0.12402,-0.15326,-0.04915,0.02631,-0.01929,-0.08557],"p15":[0.15278,-0.13427,-0.19029,0.08469,-0.07036,0.09671,0.02112,0.04649,-0.00094,0.194,0.04857,-0.20167,-0.10736,0.01463,0.05541,0.02185,-0.36732,-0.03425,0.01415,0.06964],"p16":[0.07867,-0.04772,0.1339,0.1681,0.00749,-0.04575,-0.12748,0.02684,-0.00796,-0.03299,-0.0237,-0.03701,0.04475,0.06684,0.13058,-0.00613,0.02182,0.01401,0.06297,-0.0429],"p17":[0.08337,-0.05808,0.17358,0.25984,0.07034,-0.12145,-0.21123,0.11923,0.02894,0.04599,0.00428,0.05316,-0.03747,0.11957,0.25658,-0.18748,0.01817,-0.07059,-0.02178,-0.0411],"p18":[0.08167,-0.04562,0.1657,0.23322,0.05777,-0.1075,-0.19255,0.09742,0.04527,0.0576,-0.11425,-0.10717,0.12496,-0.12977,-0.20367,0.08742,-0.01275,0.02972,-0.03382,0.03821],"p19":[0.08723,-0.01992,0.08343,-0.04811,-0.05019,0.07766,-0.23434,-0.18118,-0.06074,-0.12519,0.27171,-0.02466,0.01375,-0.03704,0.00829,0.17705,-0.02839,-0.25293,-0.19117,-0.04067],"p20":[0.02714,-0.02075,0.04765,0.02995,0.00872,-0.00067,-0.1093,-0.05253,0.0182,-0.12704,0.32796,-0.13542,-0.04673,0.18376,-0.22713,-0.17545,0.00963,0.20003,0.10809,0.05996],"p21":[0.08346,-0.0766,0.13825,-0.11872,-0.27631,-0.1411,0.00049,-0.00803,0.00128,-0.01339,0.02231,-0.02841,0.01583,-0.02661,0.03509,0.10347,-0.02453,-0.07016,0.26581,-0.16037],"p22":[0.06226,-0.08789,0.11388,-0.18509,-0.35034,-0.21484,0.01485,0.0598,0.04978,0.06527,-0.04515,-0.01778,0.00624,0.09002,-0.00611,-0.074,0.00093,0.09119,-0.2988,0.13528],"p23":[0.07194,-0.07397,0.09531,-0.15397,-0.23258,-0.09624,-0.03324,0.05933,-0.02506,0.0319,0.00181,0.02955,-0.00295,-0.03869,-0.01356,-0.03334,0.02239,-0.04346,0.17156,0.00342],"p24":[0.30044,0.30993,0.04856,-0.04548,-0.01705,0.04145,-0.13145,-0.41463,0.09613,0.13946,-0.17302,0.00322,-0.04215,0.03131,0.00509,-0.06475,-0.00994,0.03742,0.04247,0.04219],"p25":[0.28031,0.25791,-0.01141,-0.03127,0.02316,0.02891,0.1117,0.15906,-0.02384,0.20683,0.22387,0.1192,0.32023,0.04407,0.00747,0.01057,-0.00282,0.04555,-0.01262,-0.07516],"p26":[0.27157,0.35848,-0.0768,-0.06486,-0.02601,0.00565,-0.05201,0.29799,0.06224,-0.32183,-0.08893,-0.03341,-0.14523,0.00118,-0.01184,0.01841,-0.0658,-0.03962,-0.01014,0.01689],"p27":[0.10343,-0.10398,0.04343,-0.13829,0.05467,0.17144,-0.08483,0.09102,-0.00245,0.07133,-0.02398,0.02537,-0.00243,0.0235,-0.03329,-0.01123,0.14955,-0.10379,0.06792,0.1832],"p28":[0.13603,-0.17171,0.0089,-0.13499,0.12785,0.12447,0.02476,0.06745,0.28699,0.04411,-0.00314,-0.08312,0.01842,0.06838,0.02128,0.03609,0.16311,-0.10411,0.04223,0.10844],"p29":[0.2654,-0.04637,-0.31639,0.06556,-0.01688,-0.13948,-0.01229,0.00712,-0.19838,0.09959,0.06117,-0.18121,-0.14353,-0.13055,0.05037,0.01477,0.28492,0.05154,-0.02731,-0.05326],"p30":[0.19256,-0.21419,-0.28643,-0.02378,0.11938,-0.24836,-0.05897,-0.08941,-0.05001,-0.12771,-0.06102,0.209,0.12504,0.08379,-0.06587,-0.01825,-0.11799,-0.04431,0.06414,0.0536]};
 
 let lang = "tr";
 let cart = []; // {id, source: 'main'|'ai'}
+
+// --- Session-based personalization -----------------------------------------
+// In-memory only (resets on page reload) - this is a single-page demo, not a
+// multi-page site, so there's nothing meaningful to persist across visits.
+// Tracks the last few products the visitor looked at, then re-ranks the
+// (larger) candidate pools from RECS toward "what's semantically close to
+// both this product AND what this visitor has been browsing", using the
+// same latent-semantic vectors the build step computed - no extra network
+// calls, no server.
+const RECENTLY_VIEWED_MAX = 5;
+const PERSONALIZATION_HISTORY_WEIGHT = 0.35; // 0 = ignore history, 1 = ignore current product
+let recentlyViewed = []; // ids, most-recent-first, excludes the product currently open
+
+// --- Optional analytics ping --------------------------------------------
+// Best-effort only: demo.html must keep working as a zero-server static
+// file (that's the whole point of the base demo), so this silently no-ops
+// if there's no backend listening (e.g. opened directly via file://, or
+// hosted as a plain static file with no ../server running alongside it).
+// When the small server in ../server IS running, this is what feeds the
+// real numbers shown on /admin.
+const SESSION_ID = Math.random().toString(36).slice(2);
+function track(type, productId, source) {
+  try {
+    fetch('/api/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, productId, source, sessionId: SESSION_ID }),
+    }).catch(() => {});
+  } catch (e) { /* no backend present - that's fine, demo stays static */ }
+}
+
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  if (na === 0 || nb === 0) return 0;
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+
+function averageVector(vecs) {
+  const dim = vecs[0].length;
+  const out = new Array(dim).fill(0);
+  vecs.forEach((v) => v.forEach((val, i) => { out[i] += val / vecs.length; }));
+  return out;
+}
+
+// Builds a "query vector" for the given product, blended with the visitor's
+// recent browsing history (if any). Falls back to the plain product vector
+// on the very first product viewed, since there's no history yet.
+function personalizedQueryVector(currentId) {
+  const currentVec = VECTORS[currentId];
+  const historyIds = recentlyViewed.filter((id) => id !== currentId);
+  if (!currentVec || historyIds.length === 0) return currentVec;
+  const historyVecs = historyIds.map((id) => VECTORS[id]).filter(Boolean);
+  if (historyVecs.length === 0) return currentVec;
+  const historyAvg = averageVector(historyVecs);
+  const w = PERSONALIZATION_HISTORY_WEIGHT;
+  return currentVec.map((v, i) => v * (1 - w) + historyAvg[i] * w);
+}
+
+// Re-ranks a candidate id list by cosine similarity to a query vector, then
+// trims to the display count. If we're missing vectors for some reason,
+// falls back to the original (build-time) order rather than failing.
+function personalizedRerank(candidateIds, queryVec, displayCount) {
+  if (!queryVec) return candidateIds.slice(0, displayCount);
+  return candidateIds
+    .map((id) => ({ id, score: VECTORS[id] ? cosineSim(queryVec, VECTORS[id]) : -1 }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, displayCount)
+    .map((c) => c.id);
+}
 
 const t = {
   tr: {
@@ -659,9 +815,10 @@ const t = {
     addBtn: "Sepete Ekle", added: "Eklendi ✓", complementaryTitle: "Sıkça Birlikte Alınanlar", complementarySub: "AI, bu ürünle sıklıkla birlikte satın alınan tamamlayıcı ürünleri öneriyor.",
     similarTitle: "Benzer Ürünler", similarSub: "Aynı kategoriden alternatifler.",
     noReco: "Bu ürün için yeterli veri yok (demo kataloğu küçük).", aiTag: "AI",
+    personalizedTag: "Kişiselleştirildi", personalizedNote: "Bu sıralama, az önce baktığın ürünlere göre uyarlandı.",
     pricingEyebrow: "Fiyatlandırma", pricingTitle: "Basit, Şeffaf Fiyatlandırma", pricingSub: "Gizli ücret yok. İstediğin zaman iptal edebilirsin.",
-    plan1Name: "Başlangıç", plan1Period: "/ay", plan1Desc: "≤200 ürünlü mağazalar için", plan1Features: ["Benzer ürün önerisi","Sıkça birlikte alınanlar","E-posta destek"],
-    plan2Tag: "Önerilen", plan2Name: "Büyüme", plan2Period: "/ay", plan2Desc: "200-2000 ürünlü mağazalar için", plan2Features: ["Başlangıç'taki her şey","Öncelikli destek","Özel kategori kuralları"],
+    plan1Name: "Başlangıç", plan1Price: "₺499", plan1Period: "/ay", plan1Desc: "≤200 ürünlü mağazalar için", plan1Features: ["Benzer ürün önerisi","Sıkça birlikte alınanlar","E-posta destek"],
+    plan2Tag: "Önerilen", plan2Name: "Büyüme", plan2Price: "₺1.499", plan2Period: "/ay", plan2Desc: "200-2000 ürünlü mağazalar için", plan2Features: ["Başlangıç'taki her şey","Öncelikli destek","Özel kategori kuralları"],
     plan3Name: "Kurumsal", plan3Price: "Teklif Al", plan3Desc: "2000+ ürün, Shopify/global mağazalar", plan3Features: ["Özel entegrasyon","SLA destekli hizmet","Çoklu mağaza yönetimi"],
     contactTitle: "İlk 10 Mağazaya Özel Fiyat", contactSub: "Erken katılan mağazalara özel fiyat ve öncelikli kurulum desteği veriyoruz. Ürününü/kataloğunu paylaş, sana özel demoyu birlikte hazırlayalım.", contactBtn: "Bize Ulaş",
     footer: "Bu bir tanıtım/demo sayfasıdır. Ürün verisi örnektir; gerçek entegrasyon, mağaza kataloğuna göre özelleştirilir.",
@@ -683,9 +840,10 @@ const t = {
     addBtn: "Add to Cart", added: "Added ✓", complementaryTitle: "Frequently Bought Together", complementarySub: "AI suggests complementary products often purchased with this one.",
     similarTitle: "Similar Products", similarSub: "Alternatives from the same category.",
     noReco: "Not enough data for this product (small demo catalog).", aiTag: "AI",
+    personalizedTag: "Personalized", personalizedNote: "This ranking is adapted to what you just viewed.",
     pricingEyebrow: "Pricing", pricingTitle: "Simple, Transparent Pricing", pricingSub: "No hidden fees. Cancel anytime.",
-    plan1Name: "Starter", plan1Period: "/mo", plan1Desc: "For stores with ≤200 products", plan1Features: ["Similar product suggestions","Frequently bought together","Email support"],
-    plan2Tag: "Recommended", plan2Name: "Growth", plan2Period: "/mo", plan2Desc: "For stores with 200-2000 products", plan2Features: ["Everything in Starter","Priority support","Custom category rules"],
+    plan1Name: "Starter", plan1Price: "$16.63", plan1Period: "/mo", plan1Desc: "For stores with ≤200 products", plan1Features: ["Similar product suggestions","Frequently bought together","Email support"],
+    plan2Tag: "Recommended", plan2Name: "Growth", plan2Price: "$49.97", plan2Period: "/mo", plan2Desc: "For stores with 200-2000 products", plan2Features: ["Everything in Starter","Priority support","Custom category rules"],
     plan3Name: "Enterprise", plan3Price: "Get a Quote", plan3Desc: "2000+ products, Shopify/global stores", plan3Features: ["Custom integration","SLA-backed support","Multi-store management"],
     contactTitle: "Special Pricing for the First 10 Stores", contactSub: "Early adopters get special pricing and priority setup support. Share your product/catalog and let's build your custom demo together.", contactBtn: "Get in Touch",
     footer: "This is a promotional/demo page. Product data is sample data; real integration is customized to your store catalog.",
@@ -736,8 +894,8 @@ function renderStaticText() {
   setText('label-ana', s.labelAna); setText('label-ai', s.labelAi); setText('label-toplam', s.labelToplam);
 
   setText('pricing-eyebrow', s.pricingEyebrow); setText('pricing-title', s.pricingTitle); setText('pricing-sub', s.pricingSub);
-  setText('plan1-name', s.plan1Name); setText('plan1-period', s.plan1Period); setText('plan1-desc', s.plan1Desc); setListItems('plan1-features', s.plan1Features);
-  setText('plan2-tag', s.plan2Tag); setText('plan2-name', s.plan2Name); setText('plan2-period', s.plan2Period); setText('plan2-desc', s.plan2Desc); setListItems('plan2-features', s.plan2Features);
+  setText('plan1-name', s.plan1Name); setText('plan1-price', s.plan1Price); setText('plan1-period', s.plan1Period); setText('plan1-desc', s.plan1Desc); setListItems('plan1-features', s.plan1Features);
+  setText('plan2-tag', s.plan2Tag); setText('plan2-name', s.plan2Name); setText('plan2-price', s.plan2Price); setText('plan2-period', s.plan2Period); setText('plan2-desc', s.plan2Desc); setListItems('plan2-features', s.plan2Features);
   setText('plan3-name', s.plan3Name); setText('plan3-price', s.plan3Price); setText('plan3-desc', s.plan3Desc); setListItems('plan3-features', s.plan3Features);
 
   setText('contact-title', s.contactTitle); setText('contact-sub', s.contactSub); setText('contact-btn', s.contactBtn);
@@ -779,13 +937,27 @@ function recoCardHtml(p) {
 function openDetail(id) {
   const p = getProduct(id);
   const s = t[lang];
-  const rec = RECS[id] || { similar: [], complementary: [] };
+  const rec = RECS[id] || { similar: [], complementary: [], similarDisplay: 4, complementaryDisplay: 3 };
   const panel = document.getElementById('detail-panel');
   panel.classList.add('active');
 
-  const complementaryProducts = rec.complementary.map(getProduct).filter(Boolean);
-  const similarProducts = rec.similar.map(getProduct).filter(Boolean);
+  // Personalize BEFORE recording this view, so "recent history" means
+  // "what was viewed before this product", not including it.
+  const isPersonalized = recentlyViewed.filter((v) => v !== id).length > 0;
+  const queryVec = personalizedQueryVector(id);
+  const complementaryIds = personalizedRerank(rec.complementary, queryVec, rec.complementaryDisplay ?? 3);
+  const similarIds = personalizedRerank(rec.similar, queryVec, rec.similarDisplay ?? 4);
 
+  recentlyViewed = [id, ...recentlyViewed.filter((v) => v !== id)].slice(0, RECENTLY_VIEWED_MAX);
+  track('view', id);
+
+  const complementaryProducts = complementaryIds.map(getProduct).filter(Boolean);
+  const similarProducts = similarIds.map(getProduct).filter(Boolean);
+  const personalizedNote = isPersonalized
+    ? `<div class="reco-sub" style="margin-top:-6px;margin-bottom:14px;">${s.personalizedNote}</div>`
+    : '';
+
+  const mainInCart = cart.some(c => c.id === p.id);
   panel.innerHTML = `
     <div class="detail-top">
       <div class="detail-emoji">${p.img}</div>
@@ -793,13 +965,14 @@ function openDetail(id) {
         <h2>${lang === 'tr' ? p.title_tr : p.title_en}</h2>
         <div class="desc">${lang === 'tr' ? p.desc_tr : p.desc_en}</div>
         <div class="price">${fmtPrice(p.price)}</div>
-        <button class="add-btn" onclick="addToCart('${p.id}','main')">${s.addBtn}</button>
+        <button class="add-btn ${mainInCart ? 'added' : ''}" ${mainInCart ? 'disabled' : ''} onclick="addToCart('${p.id}','main')">${mainInCart ? s.added : s.addBtn}</button>
       </div>
     </div>
 
     <div class="reco-section">
-      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.complementaryTitle}</span></div>
+      <div class="reco-header"><span class="ai-tag">${s.aiTag}</span><span class="reco-title">${s.complementaryTitle}</span>${isPersonalized ? `<span class="ai-tag" style="background:var(--accent-2, #16a34a);">${s.personalizedTag}</span>` : ''}</div>
       <div class="reco-sub">${s.complementarySub}</div>
+      ${personalizedNote}
       <div class="reco-row">
         ${complementaryProducts.length ? complementaryProducts.map(cp => recoCardHtml(cp)).join('') : `<div class="empty-reco">${s.noReco}</div>`}
       </div>
@@ -819,6 +992,8 @@ function openDetail(id) {
 function addToCart(id, source) {
   if (cart.some(c => c.id === id)) return;
   cart.push({ id, source });
+  track('add_to_cart', id, source);
+  if (source === 'ai') track('recommendation_click', id, source);
   renderCart();
   const panel = document.getElementById('detail-panel');
   if (panel.classList.contains('active')) {
