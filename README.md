@@ -1,55 +1,55 @@
-# TeknoMarket AI — Ürün Önerisi (Upsell) Widget
+# TeknoMarket AI — Product Recommendation (Upsell) Widget
 
-Canlı demo / tanıtım sayfası: **[fancy-queijadas-00050a.netlify.app](https://fancy-queijadas-00050a.netlify.app)**
+Live demo / landing page: **[fancy-queijadas-00050a.netlify.app](https://fancy-queijadas-00050a.netlify.app)**
 
-E-ticaret mağazalarına eklenebilecek AI destekli ürün önerisi widget'ının kanıt-niteliğinde (proof-of-concept) demosu. Ziyaretçi bir ürüne baktığında, "sıkça birlikte alınanlar" (tamamlayıcı ürün / upsell) ve "benzer ürünler" önerir. Amaç: ortalama sepet tutarını artırmak.
+A proof-of-concept demo of an AI-powered product recommendation widget that can be embedded into e-commerce stores. When a visitor views a product, it suggests "frequently bought together" items (complementary products / upsell) and "similar products". Goal: increase the average basket size.
 
-> **Not:** Bu depodaki ürün verisi (`data/products.json`) tamamen kurgusal örnek veridir — "Aurora", "NovaBook", "TeknoMarket" gibi isimler demo amaçlı uydurulmuştur, gerçek bir marka veya mağazayla ilgisi yoktur.
+> **Note:** The product data in this repository (`data/products.json`) is entirely fictional sample data — names like "Aurora", "NovaBook", and "TeknoMarket" were made up for demo purposes and have no connection to any real brand or store.
 
-## Neler var
+## What's inside
 
-- `public/demo.html` — Tek dosyalık, sunucu gerektirmeyen tam pazarlama sayfası + çalışan interaktif widget (TR/EN dil desteği).
-- `data/products.json` — Örnek ürün kataloğu (30 ürün, elektronik/aksesuar nişi).
-- `build/generate.js` — TF-IDF (bigram + hafif Türkçe ek ayrıştırma) metin vektörlerini SVD ile düşük boyutlu bir "latent semantic" uzaya indirger (LSA), bu uzayda kosinüs benzerliği + kategori kuralı ile "benzer ürün" ve "tamamlayıcı ürün" önerilerini hesaplar, `data/recommendations.json` üretir.
-- `build/build-demo.js` — Ürün + öneri verisini HTML şablonuna gömüp nihai `public/demo.html` dosyasını üretir.
-- `build/test-jsdom.js`, `build/test-all-products.js` — Demo'nun mantığını (sepete ekleme, dil geçişi, 30 ürünün tamamı) tarayıcı olmadan (jsdom ile) test eder.
-- `server/index.js`, `server/admin.html` — Opsiyonel, kendi kendine yeten bir analiz arka ucu (bkz. aşağıda).
+- `public/demo.html` — A single-file, server-free full marketing page + working interactive widget (TR/EN language support, English by default).
+- `data/products.json` — Sample product catalog (30 products, electronics/accessories niche).
+- `build/generate.js` — Reduces TF-IDF (bigram + light Turkish suffix stripping) text vectors to a low-dimensional "latent semantic" space via SVD (LSA), then computes "similar product" and "complementary product" recommendations using cosine similarity + a category rule in that space, producing `data/recommendations.json`.
+- `build/build-demo.js` — Embeds the product + recommendation data into the HTML template to produce the final `public/demo.html` file.
+- `build/test-jsdom.js`, `build/test-all-products.js` — Test the demo's logic (add-to-cart, language switching, all 30 products) without a browser (via jsdom).
+- `server/index.js`, `server/admin.html` — An optional, self-contained analytics backend (see below).
 
-## Nasıl çalıştırılır
+## How to run
 
 ```bash
 npm install
-npm run build   # data/recommendations.json, data/vectors.json ve public/demo.html üretir
-npm test        # mantık testlerini çalıştırır
+npm run build   # produces data/recommendations.json, data/vectors.json and public/demo.html
+npm test        # runs the logic tests
 ```
 
-`public/demo.html` üretildikten sonra çift tıklayarak doğrudan tarayıcıda açılabilir — hiçbir sunucu veya API anahtarı gerekmez, widget tamamen statik çalışır.
+Once `public/demo.html` is generated, it can be opened directly in a browser by double-clicking — no server or API key required, the widget runs entirely static.
 
-## Oturum bazlı kişiselleştirme
+## Session-based personalization
 
-Ziyaretçi art arda birkaç ürüne baktığında, "Benzer Ürünler" ve "Sıkça Birlikte Alınanlar" sıralaması, sadece o anki üründen değil ziyaretçinin az önce baktığı ürünlerden de etkilenir (LSA vektörlerinin ağırlıklı ortalaması alınarak). Bu tamamen tarayıcıda, sayfa hafızasında çalışır — sayfa yenilendiğinde sıfırlanır, ekstra bir sunucu çağrısı gerektirmez. Kişiselleştirme devredeyken arayüzde küçük bir "Kişiselleştirildi" etiketi görünür.
+When a visitor looks at several products in a row, the ranking of "Similar Products" and "Frequently Bought Together" is influenced not just by the current product but also by the products the visitor recently viewed (via a weighted average of LSA vectors). This runs entirely in the browser, in page memory — it resets on reload and requires no extra server call. While personalization is active, a small "Personalized" tag appears in the UI.
 
-## Opsiyonel analiz paneli (server/)
+## Optional analytics dashboard (server/)
 
-`public/demo.html` her zaman sunucusuz, tek dosya olarak çalışmaya devam eder. Ama istersen yanında küçük bir Node/Express arka ucu da çalıştırabilirsin:
+`public/demo.html` always continues to work server-free, as a single file. But you can optionally run a small Node/Express backend alongside it:
 
 ```bash
-npm run server   # http://localhost:4000/demo.html ve http://localhost:4000/admin
+npm run server   # http://localhost:4000/demo.html and http://localhost:4000/admin
 ```
 
-Bu arka uç çalışırken, demo'daki gerçek etkileşimler (ürün görüntüleme, öneri tıklaması, sepete ekleme — ana ürün mü AI önerisi mi olduğu ayrımıyla) `server/data/events.json` dosyasına loglanır ve `/admin` sayfası bu gerçek verilerden (oturum sayısı, AI kaynaklı sepet artış yüzdesi, en çok tıklanan öneriler gibi) canlı istatistikler hesaplar — hiçbir sayı sabit/uydurma değildir, demo'yu birkaç kez gezip sepete ürün ekleyince `/admin`'de değişir.
+While this backend is running, real interactions in the demo (product views, recommendation clicks, add-to-cart — distinguishing main product vs. AI recommendation) are logged to `server/data/events.json`, and the `/admin` page computes live statistics from this real data (session count, AI-driven cart uplift percentage, most-clicked recommendations, etc.) — no number is hardcoded or fabricated; browsing the demo and adding products to cart a few times changes what you see on `/admin`.
 
-**Kapsam konusunda dürüst not:** Bu, tek mağaza/tek dosya (JSON) düzeyinde bir prototip — kimlik doğrulama yok, çoklu mağaza (multi-tenant) desteği yok. Gerçek bir üretim SaaS backend'i (CSV yükleme, script-tag entegrasyonu, faturalama) `sonraki-adimlar.md`'deki asıl yol haritası maddesi; ona ancak gerçek müşteri talebi doğrulanınca geçilecek. Bu analiz paneli, o adıma geçilmeden önce "bu widget'ın etkisini nasıl ölçeceğiz" sorusunu somut, çalışan bir örnekle cevaplıyor.
+**Honest note on scope:** this is a single-store/single-file (JSON) level prototype — no authentication, no multi-tenant support. A real production SaaS backend (CSV upload, script-tag integration, billing) is the actual roadmap item in `next-steps.md`; that only gets built once real customer demand is validated. This analytics dashboard answers the "how will we measure this widget's impact" question with a concrete, working example, ahead of that step.
 
-## Neden gerçek AI API'si (OpenAI/Claude) yerine TF-IDF + LSA kullanıldı
+## Why TF-IDF + LSA instead of a real AI API (OpenAI/Claude)
 
-Bu demo aşamasında maliyet ve bağımlılık sıfır olsun diye öneriler yerel/ücretsiz bir yöntemle hesaplanıyor: TF-IDF vektörleri + SVD ile boyut indirgeme (Latent Semantic Analysis). Bu, ham anahtar kelime eşleşmesinden daha güçlü — ürünler birebir aynı kelimeleri paylaşmasa da anlamsal olarak yakın metinleri yakalayabiliyor — ama gerçek bir nöral embedding modeli (OpenAI/Claude) değil, klasik ve kanıtlanmış bir istatistiksel teknik. Nöral bir embedding modeline geçmeyi denedik; bunun için model ağırlıklarının Hugging Face'ten indirilmesi gerekiyor ve mevcut geliştirme ortamının ağ politikası bunu engelliyor. Gerçek bir mağazaya bağlanacak üretim sürümünde bu adım, daha iyi semantik kalite için embedding tabanlı bir yönteme (OpenAI/Claude embedding + vektör veritabanı) çevrilebilir — arayüz ve iş mantığı (kosinüs benzerliği + kategori kuralı) aynı kalıyor, sadece `embed()` fonksiyonu değişiyor.
+At this demo stage, recommendations are computed with a local/free method so that cost and dependencies stay at zero: TF-IDF vectors + dimensionality reduction via SVD (Latent Semantic Analysis). This is stronger than raw keyword matching — it can capture semantically close text even when products don't share the exact same words — but it is not a real neural embedding model (OpenAI/Claude), it's a classic, proven statistical technique. We tried switching to a neural embedding model; that requires downloading model weights from Hugging Face, and the current development environment's network policy blocks that. In a production version connected to a real store, this step can be swapped for an embedding-based method (OpenAI/Claude embeddings + a vector database) for better semantic quality — the interface and business logic (cosine similarity + category rule) stay the same, only the `embed()` function changes.
 
-## Yol haritası
+## Roadmap
 
-1. **(Şu an)** Bu demoyu gerçek Türk e-ticaret sahiplerine göstererek talep doğrula.
-2. İlgi gösteren mağazalar için, onların gerçek ürün CSV'siyle özelleştirilmiş demo hazırla.
-3. İlk ödeyen müşteriler bulununca: CSV yükleme + script-tag entegrasyonu olan gerçek backend'i inşa et.
-4. Türkiye'de birkaç ay çalıştıktan sonra Shopify App Store üzerinden global pazara aç.
+1. **(Now)** Validate demand by showing this demo to real e-commerce store owners.
+2. For interested stores, prepare a customized demo using their real product CSV.
+3. Once the first paying customers are found: build the real backend with CSV upload + script-tag integration.
+4. After running for a few months, expand to the global market via the Shopify App Store.
 
-Detaylı fiyatlandırma ve sonraki adımlar için `sonraki-adimlar.md` dosyasına bakın.
+For detailed pricing and next steps, see `next-steps.md`.

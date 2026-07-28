@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Widget Analiz Paneli</title>
+<title>Widget Analytics Dashboard</title>
 <style>
   :root { --bg:#0b0d12; --panel:#141822; --border:#232838; --text:#eef1f6; --muted:#8b93a7; --accent:#7c5cff; --accent-2:#22c55e; }
   * { box-sizing: border-box; }
@@ -29,27 +29,27 @@
 </head>
 <body>
   <div class="title-row">
-    <h1 style="margin:0;">Widget Analiz Paneli</h1>
-    <span class="badge">DEMO / PROTOTİP</span>
+    <h1 style="margin:0;">Widget Analytics Dashboard</h1>
+    <span class="badge">DEMO / PROTOTYPE</span>
   </div>
-  <div class="sub">Öneri widget'ının gerçek zamanlı etkisi — gerçekten loglanmış olaylardan hesaplanır. Bu panel tek mağazalık bir prototip; kimlik doğrulama yok, gerçek müşteri verisi tutmaz.</div>
+  <div class="sub">Real-time impact of the recommendation widget — computed from actually logged events. This dashboard is a single-store prototype; no authentication, no real customer data is stored.</div>
 
   <div class="note">
-    Bu panel, bu sunucu çalışırken <a href="/demo.html">demo.html</a>'de yapılan gerçek etkileşimlerden (ürün görüntüleme, öneri tıklama, sepete ekleme) veri okur. Sayılar sıfırsa, önce demoyu birkaç kez gezip birkaç ürün ekleyin, sonra "Yenile"ye basın.
+    This dashboard reads data from real interactions (product views, recommendation clicks, add-to-cart) made in <a href="/demo.html">demo.html</a> while this server is running. If the numbers are zero, browse the demo and add a few products first, then click "Refresh".
   </div>
 
   <div class="grid" id="cards"></div>
 
   <section>
-    <h2>En çok tıklanan öneriler</h2>
+    <h2>Most-clicked recommendations</h2>
     <table id="top-table">
-      <thead><tr><th>Ürün ID</th><th>Öneri tıklaması</th></tr></thead>
+      <thead><tr><th>Product ID</th><th>Recommendation clicks</th></tr></thead>
       <tbody></tbody>
     </table>
-    <div class="empty" id="top-empty" style="display:none;">Henüz öneri tıklaması loglanmadı.</div>
+    <div class="empty" id="top-empty" style="display:none;">No recommendation clicks logged yet.</div>
   </section>
 
-  <button class="refresh" onclick="load()">Yenile</button>
+  <button class="refresh" onclick="load()">Refresh</button>
 
 <script>
 async function load() {
@@ -57,12 +57,12 @@ async function load() {
   const s = await res.json();
 
   const cards = [
-    { label: 'Toplam oturum', value: s.sessions },
-    { label: 'Ürün görüntüleme', value: s.views },
-    { label: 'Öneri tıklaması', value: s.recommendationClicks },
-    { label: 'Sepete ekleme (ana ürün)', value: s.addToCartMain },
-    { label: 'Sepete ekleme (AI önerisi)', value: s.addToCartAi },
-    { label: 'AI kaynaklı sepet artışı', value: '+' + s.upliftPct + '%', accent: true },
+    { label: 'Total sessions', value: s.sessions },
+    { label: 'Product views', value: s.views },
+    { label: 'Recommendation clicks', value: s.recommendationClicks },
+    { label: 'Add to cart (main product)', value: s.addToCartMain },
+    { label: 'Add to cart (AI recommendation)', value: s.addToCartAi },
+    { label: 'AI-driven cart uplift', value: '+' + s.upliftPct + '%', accent: true },
   ];
   document.getElementById('cards').innerHTML = cards.map(c => `
     <div class="card">

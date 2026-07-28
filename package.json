@@ -1,7 +1,7 @@
 {
   "name": "urun-onerisi-mvp",
   "version": "1.0.0",
-  "description": "AI destekli ürün önerisi (upsell/cross-sell) widget demosu ve pazarlama sayfası",
+  "description": "AI-powered product recommendation (upsell/cross-sell) widget demo and marketing page",
   "main": "index.js",
   "scripts": {
     "build": "node build/generate.js && node build/build-demo.js",
@@ -9,7 +9,7 @@
     "server": "node server/index.js"
   },
   "keywords": [
-    "e-ticaret",
+    "ecommerce",
     "ai",
     "upsell",
     "shopify",
