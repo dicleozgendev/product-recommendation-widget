@@ -6,10 +6,11 @@
 // the real end-to-end flow (create store -> upload CSV -> get a script tag
 // -> real recommendations served to a real embedded widget) and enough for
 // a handful of pilot merchants. It is NOT a production-grade multi-tenant
-// SaaS backend: no real database, no key rotation/revocation UI, no
-// per-domain CORS allow-listing, no rate limiting per store. Those are real
-// engineering work for once there are paying customers to justify them —
-// see next-steps.md.
+// SaaS backend: no real database, no key rotation/revocation UI. Rate
+// limiting (server/index.js) and optional per-store CORS origin locking
+// (the `allowedOrigin` field below) ARE in place, at prototype-appropriate
+// strength — real engineering work still remains for once there are paying
+// customers to justify a full production hardening pass — see next-steps.md.
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
@@ -51,8 +52,15 @@ function generateId(prefix, bytes = 8) {
  * API key is only ever returned here, at creation time (like most real API
  * key systems), so the caller (the merchant onboarding this widget) must
  * save it immediately.
+ *
+ * @param {string} [name]
+ * @param {string} [allowedOrigin] - e.g. "https://mystore.com". If set, the
+ *   public recommendations endpoint only allows cross-origin reads from this
+ *   exact origin (see the CORS middleware in server/index.js). If omitted,
+ *   the endpoint stays open to any origin — simpler for testing/demos, but
+ *   real merchants should set this once they know their site's domain.
  */
-function createStore(name) {
+function createStore(name, allowedOrigin) {
   const storeId = generateId("store", 6);
   const apiKey = generateId("key", 20);
   ensureDir(storeDir(storeId));
@@ -61,6 +69,7 @@ function createStore(name) {
     storeId,
     apiKeyHash: crypto.createHash("sha256").update(apiKey).digest("hex"),
     name: name || "Unnamed store",
+    allowedOrigin: allowedOrigin || null,
     createdAt: new Date().toISOString(),
     productCount: 0,
   };

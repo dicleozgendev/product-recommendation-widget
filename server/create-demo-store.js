@@ -65,6 +65,11 @@ async function main() {
   console.log("\nPaste this into any product page on a real store:\n");
   console.log(snippet);
   console.log(`\nOr see it running on a fake third-party page right now:\n${BASE}/merchant-example.html?store=${storeId}&product=p1`);
+  console.log(
+    "\nNote: this demo store is open to any origin (no allowedOrigin set). " +
+      'For a real merchant, pass one when creating the store: POST /api/stores { "name": "...", "allowedOrigin": "https://theirdomain.com" } ' +
+      "to lock the recommendations endpoint to just their site."
+  );
 }
 
 main().catch((err) => {

@@ -64,6 +64,48 @@ async function main() {
       throw new Error("catalog upload failed: " + JSON.stringify(uploadBody));
     }
 
+    // 1b. A store that registered an allowedOrigin should only reflect CORS
+    // headers for that exact origin - verify both the allowed and a
+    // different ("attacker") origin, so a future change can't silently
+    // widen this back to "allow everyone" without a test failing.
+    const lockedCreateRes = await fetch(`${BASE}/api/stores`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "locked store", allowedOrigin: "https://real-merchant.example" }),
+    });
+    const lockedStore = await lockedCreateRes.json();
+    const allowedRes = await fetch(`${BASE}/api/stores/${lockedStore.storeId}/products/p1/recommendations`, {
+      headers: { Origin: "https://real-merchant.example" },
+    });
+    const blockedRes = await fetch(`${BASE}/api/stores/${lockedStore.storeId}/products/p1/recommendations`, {
+      headers: { Origin: "https://evil-scraper.example" },
+    });
+    const corsResults = {
+      allowedOriginGetsHeader: allowedRes.headers.get("access-control-allow-origin") === "https://real-merchant.example",
+      differentOriginGetsNoHeader: blockedRes.headers.get("access-control-allow-origin") === null,
+    };
+
+    // 1c. Rate limiting: store creation is capped - confirm it actually
+    // trips after enough rapid requests instead of just existing in code.
+    let rateLimitTripped = false;
+    for (let i = 0; i < 12; i++) {
+      const r = await fetch(`${BASE}/api/stores`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "spam" + i }),
+      });
+      if (r.status === 429) {
+        rateLimitTripped = true;
+        break;
+      }
+    }
+
+    // 1d. Helmet security headers present on a static response.
+    const staticRes = await fetch(`${BASE}/demo.html`);
+    const helmetOk =
+      staticRes.headers.get("x-content-type-options") === "nosniff" &&
+      !!staticRes.headers.get("x-frame-options");
+
     // 2. Load the fake merchant page for real in jsdom, with scripts running
     // and real network access (resources: "usable") so widget.js actually
     // executes and fetches from our real running server.
@@ -117,11 +159,16 @@ async function main() {
     results.stats = await statsRes.json();
 
     // 6. Confirm the recommendations endpoint is really reachable
-    // cross-origin (CORS) the way a real merchant's browser would need.
+    // cross-origin (CORS) the way a real merchant's browser would need
+    // (this particular store has no allowedOrigin set, so it should stay
+    // open to any origin - the locked-store case is checked separately above).
     const corsRes = await fetch(`${BASE}/api/stores/${storeId}/products/p1/recommendations`, {
       headers: { Origin: "https://totally-different-domain.example" },
     });
     results.corsAllowOrigin = corsRes.headers.get("access-control-allow-origin");
+    results.lockedStoreCors = corsResults;
+    results.rateLimitTripped = rateLimitTripped;
+    results.helmetHeadersPresent = helmetOk;
 
     console.log(JSON.stringify(results, null, 2));
     window.close();
@@ -133,7 +180,11 @@ async function main() {
       /Sepette 2/.test(results.cartStatusAfterMainAdd) &&
       results.stats.views >= 1 &&
       results.stats.addToCartAi >= 1 &&
-      results.corsAllowOrigin === "*";
+      results.corsAllowOrigin === "*" &&
+      corsResults.allowedOriginGetsHeader &&
+      corsResults.differentOriginGetsNoHeader &&
+      rateLimitTripped &&
+      helmetOk;
 
     if (!ok) {
       console.error("\nFAIL: one or more end-to-end assertions did not hold.");

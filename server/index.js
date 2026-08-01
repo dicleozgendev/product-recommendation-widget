@@ -18,6 +18,8 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const stores = require("./stores");
 const { parseProductsCsv } = require("./csv");
 
@@ -27,6 +29,34 @@ const EVENTS_FILE = path.join(DATA_DIR, "events.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 if (!fs.existsSync(EVENTS_FILE)) fs.writeFileSync(EVENTS_FILE, "[]");
+
+// Store creation and CSV upload are the two actions that cost real disk/CPU
+// and have no cost to the caller otherwise (no payment, no email
+// verification) - these get the strictest limits. The public recommendation
+// endpoint is what a real widget.js calls on every product-page view on a
+// real store, so its limit is much more generous (legitimate traffic can be
+// bursty), it's just there to blunt obvious abuse/scraping.
+const createStoreLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "too many stores created from this IP recently, try again later" },
+});
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "too many catalog uploads from this IP recently, try again later" },
+});
+const publicApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "rate limit exceeded" },
+});
 
 function readEvents() {
   try {
@@ -45,19 +75,51 @@ function appendEvent(evt) {
 }
 
 const app = express();
+
+// Sets standard security headers (X-Content-Type-Options, X-Frame-Options,
+// etc.). CSP is relaxed to allow this project's own inline <script> blocks
+// (public/demo.html and server/admin.html both bake their JS inline rather
+// than as a separate file) - these are our own trusted static assets, not
+// user-submitted content, so 'unsafe-inline' here isn't the same risk it
+// would be on a page that renders untrusted input.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "'unsafe-inline'"],
+        "script-src-attr": ["'unsafe-inline'"],
+      },
+    },
+  })
+);
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // --- Multi-tenant script-tag widget API ------------------------------------
 // These /api/stores/* routes are what a real embedded widget.js on a real
-// merchant's site talks to (see public/widget.js). CORS is wide open here
-// on purpose for this prototype, since the whole point is to be called from
-// an arbitrary third-party domain (the merchant's storefront) - a real
-// production version would allow-list each store's registered domain(s)
-// instead of "*", to stop other sites from scraping a store's catalog data
-// through this endpoint.
+// merchant's site talks to (see public/widget.js). A store can optionally
+// register an allowedOrigin at creation time (see POST /api/stores below);
+// if it did, only that origin is reflected in Access-Control-Allow-Origin.
+// If it didn't, this falls back to "*" so the demo/onboarding flow (which
+// doesn't know its final domain in advance) keeps working - a merchant who
+// cares about locking this down sets allowedOrigin when they register.
 app.use("/api/stores", (req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  const storeId = req.params.storeId || req.path.split("/")[1];
+  const meta = storeId ? stores.loadMeta(storeId) : null;
+  const origin = req.header("Origin");
+
+  if (meta && meta.allowedOrigin) {
+    if (origin === meta.allowedOrigin) {
+      res.header("Access-Control-Allow-Origin", meta.allowedOrigin);
+    }
+    // If the origin doesn't match, we simply don't set the header - the
+    // browser enforces CORS on the caller's side, so no header means the
+    // response body is fetched but not readable by that page's script.
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
   if (req.method === "OPTIONS") return res.sendStatus(204);
@@ -77,10 +139,12 @@ function requireApiKey(req, res, next) {
 // create -> upload -> embed loop can be tested end-to-end without building
 // a merchant dashboard first. The apiKey is only ever returned in this one
 // response - store it now, there is no "forgot my key" recovery endpoint.
-app.post("/api/stores", (req, res) => {
-  const { name } = req.body || {};
-  const { storeId, apiKey } = stores.createStore(name);
-  res.json({ storeId, apiKey });
+// Optionally pass `allowedOrigin` (e.g. "https://mystore.com") to lock the
+// public recommendations endpoint to that origin instead of leaving it open.
+app.post("/api/stores", createStoreLimiter, (req, res) => {
+  const { name, allowedOrigin } = req.body || {};
+  const { storeId, apiKey } = stores.createStore(name, allowedOrigin);
+  res.json({ storeId, apiKey, allowedOrigin: allowedOrigin || null });
 });
 
 // Upload/replace a store's product catalog via CSV (raw text body,
@@ -90,6 +154,7 @@ app.post("/api/stores", (req, res) => {
 // for very large catalogs so the HTTP request doesn't hang.
 app.post(
   "/api/stores/:storeId/products",
+  uploadLimiter,
   express.text({ type: ["text/csv", "text/plain"], limit: "5mb" }),
   requireApiKey,
   (req, res) => {
@@ -115,7 +180,7 @@ app.get("/api/stores/:storeId/products", (req, res) => {
 // live storefront pages, so it must be callable cross-origin without a
 // secret embedded in client-side JS (an API key in front-end JS wouldn't be
 // secret anyway - anyone viewing page source would see it).
-app.get("/api/stores/:storeId/products/:productId/recommendations", (req, res) => {
+app.get("/api/stores/:storeId/products/:productId/recommendations", publicApiLimiter, (req, res) => {
   const { storeId, productId } = req.params;
   if (!stores.storeExists(storeId)) return res.status(404).json({ error: "store not found" });
   const result = stores.getProductRecommendations(storeId, productId);
@@ -123,7 +188,7 @@ app.get("/api/stores/:storeId/products/:productId/recommendations", (req, res) =
   res.json(result);
 });
 
-app.post("/api/stores/:storeId/events", (req, res) => {
+app.post("/api/stores/:storeId/events", publicApiLimiter, (req, res) => {
   const { storeId } = req.params;
   if (!stores.storeExists(storeId)) return res.status(404).json({ error: "store not found" });
   const { type, productId, source, sessionId } = req.body || {};

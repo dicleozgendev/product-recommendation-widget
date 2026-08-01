@@ -21,7 +21,10 @@
   .product .price { font-size: 24px; font-weight: bold; color: #7a3e00; margin-bottom: 16px; }
   .add-to-cart { background: #7a3e00; color: #fff; border: none; padding: 12px 26px; font-size: 15px; border-radius: 6px; cursor: pointer; font-family: -apple-system, sans-serif; }
   .add-to-cart:hover { background: #5c2e00; }
-  .cart-status { font-family: -apple-system, sans-serif; font-size: 13px; margin-top: 10px; color: #2b7a2b; min-height: 18px; }
+  .add-to-cart.added { background: #2b7a2b; cursor: default; }
+  .add-to-cart.added:hover { background: #2b7a2b; }
+  .cart-status { font-family: -apple-system, sans-serif; font-size: 13px; margin-top: 10px; color: #2b7a2b; min-height: 18px; font-weight: 600; }
+  .cart-badge { position: fixed; top: 16px; right: 20px; background: #2b2b2b; color: #fff; font-family: -apple-system, sans-serif; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 999px; }
   hr { border: none; border-top: 1px solid #e2ddd3; margin: 30px 0; }
   footer { font-family: -apple-system, sans-serif; font-size: 12px; color: #999; text-align: center; padding: 20px; }
 </style>
@@ -29,6 +32,7 @@
 <body>
 
 <header>ÖrnekMağaza.com</header>
+<div class="cart-badge">🛒 Sepet: <span id="cart-count">0</span></div>
 
 <div class="wrap">
 
@@ -70,14 +74,25 @@
   // This is what a real merchant would already have; they just need one
   // addEventListener call to also record AI-sourced adds.
   var cart = [];
-  document.getElementById('main-add-btn').addEventListener('click', function () {
+
+  function updateCartUi(lastNote) {
+    document.getElementById('cart-count').textContent = cart.length;
+    document.getElementById('cart-status').textContent =
+      'Sepette ' + cart.length + ' ürün var.' + (lastNote ? ' (' + lastNote + ')' : '');
+  }
+
+  var mainBtn = document.getElementById('main-add-btn');
+  mainBtn.addEventListener('click', function () {
+    if (mainBtn.classList.contains('added')) return; // this demo product only has one unit to add
     cart.push({ id: '__PRODUCT_ID__', source: 'main' });
-    document.getElementById('cart-status').textContent = 'Sepette ' + cart.length + ' ürün var.';
+    mainBtn.textContent = 'Eklendi ✓';
+    mainBtn.classList.add('added');
+    updateCartUi('ana ürün eklendi');
   });
 
   window.addEventListener('airw:add-to-cart', function (e) {
     cart.push({ id: e.detail.productId, source: 'ai' });
-    document.getElementById('cart-status').textContent = 'Sepette ' + cart.length + ' ürün var. (Son eklenen: AI önerisi ' + e.detail.productId + ')';
+    updateCartUi('son eklenen: AI önerisi ' + e.detail.productId);
   });
 </script>
 
