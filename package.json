@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "node build/generate.js && node build/build-demo.js",
-    "test": "node build/test-jsdom.js && node build/test-all-products.js",
-    "server": "node server/index.js"
+    "test": "node build/test-jsdom.js && node build/test-all-products.js && node build/test-widget.js",
+    "server": "node server/index.js",
+    "create-demo-store": "node server/create-demo-store.js"
   },
   "keywords": [
     "ecommerce",

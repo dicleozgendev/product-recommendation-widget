@@ -9,11 +9,15 @@ A proof-of-concept demo of an AI-powered product recommendation widget that can 
 ## What's inside
 
 - `public/demo.html` — A single-file, server-free full marketing page + working interactive widget (TR/EN language support, English by default).
-- `data/products.json` — Sample product catalog (30 products, electronics/accessories niche).
-- `build/generate.js` — Reduces TF-IDF (bigram + light Turkish suffix stripping) text vectors to a low-dimensional "latent semantic" space via SVD (LSA), then computes "similar product" and "complementary product" recommendations using cosine similarity + a category rule in that space, producing `data/recommendations.json`.
+- `data/products.json` / `data/products.csv` — Sample product catalog (30 products, electronics/accessories niche). The CSV is the same catalog in the format a real store would upload (see "Script-tag widget" below).
+- `server/reco-engine.js` — The actual recommendation computation (TF-IDF + LSA + cosine similarity + category rule). Shared by both the static build (`build/generate.js`, one fixed catalog baked in at build time) and the multi-tenant script-tag backend (`server/stores.js`, computed on demand for whatever catalog a real store uploads) — one implementation, two ways of using it.
+- `build/generate.js` — Runs `reco-engine.js` over `data/products.json`, producing `data/recommendations.json` + `data/vectors.json` for the static demo.
 - `build/build-demo.js` — Embeds the product + recommendation data into the HTML template to produce the final `public/demo.html` file.
-- `build/test-jsdom.js`, `build/test-all-products.js` — Test the demo's logic (add-to-cart, language switching, all 30 products) without a browser (via jsdom).
-- `server/index.js`, `server/admin.html` — An optional, self-contained analytics backend (see below).
+- `build/test-jsdom.js`, `build/test-all-products.js`, `build/test-widget.js` — Test the demo's logic, all 30 products, and the full script-tag widget flow, without a browser (via jsdom).
+- `server/index.js`, `server/admin.html` — An optional, self-contained analytics backend for the static demo (see below), plus the multi-tenant script-tag API.
+- `server/stores.js`, `server/csv.js`, `server/create-demo-store.js` — Multi-tenant store management, CSV parsing, and an onboarding-flow script (see "Script-tag widget" below).
+- `public/widget.js` — The actual embeddable script a real store pastes onto its site.
+- `server/merchant-example.template.html` — A fake, deliberately differently-styled third-party store page, used to prove `widget.js` really works when embedded somewhere that isn't our own demo.
 
 ## How to run
 
@@ -39,7 +43,26 @@ npm run server   # http://localhost:4000/demo.html and http://localhost:4000/adm
 
 While this backend is running, real interactions in the demo (product views, recommendation clicks, add-to-cart — distinguishing main product vs. AI recommendation) are logged to `server/data/events.json`, and the `/admin` page computes live statistics from this real data (session count, AI-driven cart uplift percentage, most-clicked recommendations, etc.) — no number is hardcoded or fabricated; browsing the demo and adding products to cart a few times changes what you see on `/admin`.
 
-**Honest note on scope:** this is a single-store/single-file (JSON) level prototype — no authentication, no multi-tenant support. A real production SaaS backend (CSV upload, script-tag integration, billing) is the actual roadmap item in `next-steps.md`; that only gets built once real customer demand is validated. This analytics dashboard answers the "how will we measure this widget's impact" question with a concrete, working example, ahead of that step.
+**Honest note on scope:** this specific analytics dashboard is a single-store/single-file (JSON) level prototype — no authentication, no multi-tenant support. It answers the "how will we measure this widget's impact" question with a concrete, working example. The actual multi-tenant, script-tag version is described next.
+
+## Script-tag widget (real multi-tenant backend)
+
+This is the part that turns the widget from "a demo you show people" into something a real, independent store can actually embed on their own site — the `next-steps.md` roadmap item, now built.
+
+```bash
+npm run server              # start the backend (http://localhost:4000)
+npm run create-demo-store   # in another terminal: creates a real store, uploads data/products.csv
+```
+
+`create-demo-store` prints a storeId, a one-time API key, the exact `<script>` snippet a merchant would paste onto a product page, and a URL that shows it actually running on a fake, differently-styled third-party page (`server/merchant-example.template.html`) — proof this isn't just "the API returns JSON", the widget really renders and works when embedded somewhere that isn't our own demo.
+
+How a real store would use it:
+1. `POST /api/stores` → get a `storeId` + one-time `apiKey`.
+2. `POST /api/stores/:storeId/products` with their product catalog as CSV (`Content-Type: text/csv`, `x-api-key` header) → recommendations are computed immediately with the same `reco-engine.js` used everywhere else in this repo.
+3. Paste `public/widget.js` onto their product pages via a `<script data-store-id="..." data-product-id="...">` tag. The widget fetches `GET /api/stores/:storeId/products/:productId/recommendations` (public, CORS-enabled — it has to be callable from the merchant's own domain) and renders "frequently bought together" / "similar products" cards.
+4. Cart integration: the widget cannot add items to a store's real cart (every platform's cart API is different) — clicking a recommended product's "+" button dispatches a `airw:add-to-cart` browser CustomEvent with the product id; the merchant adds one `window.addEventListener('airw:add-to-cart', ...)` call to wire it into their own real cart logic. See `server/merchant-example.template.html` for a working example of exactly that.
+
+**Honest scope note on this backend too:** stores are persisted as JSON files on local disk (`server/stores/<id>/`), gated by a single API key per store (SHA-256 hashed, never stored or logged in plaintext). That's real enough to onboard a handful of pilot merchants and prove the whole loop end-to-end — it is not yet a scaled production SaaS backend: no billing, no key rotation, no per-domain CORS allow-listing (currently `Access-Control-Allow-Origin: *` on the public recommendation endpoint), no admin UI for merchants to manage their own store. Those are real, sizeable engineering items for once there's validated paying demand — see `next-steps.md`.
 
 ## Why TF-IDF + LSA instead of a real AI API (OpenAI/Claude)
 

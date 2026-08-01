@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÖrnekMağaza.com — Ürün Sayfası</title>
+<style>
+  /* Deliberately a completely different look from the TeknoMarket AI demo
+     page (different font, colors, layout) — this file exists to prove the
+     widget really works when embedded on SOMEONE ELSE's site, not just
+     inside our own polished demo. */
+  body { font-family: Georgia, "Times New Roman", serif; background: #faf7f2; color: #2b2b2b; margin: 0; }
+  header { background: #2b2b2b; color: #fff; padding: 16px 24px; font-size: 20px; font-weight: bold; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 30px 24px; }
+  .notice { background: #fff3cd; border: 1px solid #ffe08a; padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 24px; font-family: -apple-system, sans-serif; }
+  .notice code { background: #00000010; padding: 1px 5px; border-radius: 4px; }
+  .product { display: flex; gap: 24px; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; }
+  .product .emoji { font-size: 90px; background: #fff; border: 1px solid #e2ddd3; border-radius: 10px; padding: 30px; }
+  .product h1 { font-size: 26px; margin: 0 0 10px; }
+  .product .desc { color: #555; margin-bottom: 14px; max-width: 480px; }
+  .product .price { font-size: 24px; font-weight: bold; color: #7a3e00; margin-bottom: 16px; }
+  .add-to-cart { background: #7a3e00; color: #fff; border: none; padding: 12px 26px; font-size: 15px; border-radius: 6px; cursor: pointer; font-family: -apple-system, sans-serif; }
+  .add-to-cart:hover { background: #5c2e00; }
+  .cart-status { font-family: -apple-system, sans-serif; font-size: 13px; margin-top: 10px; color: #2b7a2b; min-height: 18px; }
+  hr { border: none; border-top: 1px solid #e2ddd3; margin: 30px 0; }
+  footer { font-family: -apple-system, sans-serif; font-size: 12px; color: #999; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+
+<header>ÖrnekMağaza.com</header>
+
+<div class="wrap">
+
+  <div class="notice">
+    Bu sayfa <strong>ÖrnekMağaza.com</strong> adında hayali, bağımsız bir mağaza sitesini simüle eder —
+    <code>public/widget.js</code>'nin gerçekten üçüncü taraf bir sitede, script-tag olarak nasıl çalıştığını göstermek içindir.
+    Aşağıdaki "Sepete Ekle" butonu bu sahte mağazanın <em>kendi</em> (sahte) sepet mantığını kullanır; AI öneri widget'ı bu sepetle
+    <code>airw:add-to-cart</code> tarayıcı olayı (custom event) üzerinden konuşur — gerçek entegrasyonda bunun yerine mağazanın kendi gerçek sepet API'si çağrılır.
+  </div>
+
+  <div class="product">
+    <div class="emoji">__PRODUCT_EMOJI__</div>
+    <div>
+      <h1>__PRODUCT_TITLE__</h1>
+      <div class="desc">__PRODUCT_DESC__</div>
+      <div class="price">__PRODUCT_PRICE__</div>
+      <button class="add-to-cart" id="main-add-btn">Sepete Ekle</button>
+      <div class="cart-status" id="cart-status"></div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- This is the actual embed a real merchant would paste onto their product page. -->
+  <div id="ai-reco"></div>
+  <script src="/widget.js"
+          data-store-id="__STORE_ID__"
+          data-product-id="__PRODUCT_ID__"
+          data-container="ai-reco"
+          data-lang="__LANG__"
+          data-api-base="__API_BASE__"></script>
+
+</div>
+
+<footer>Bu bir entegrasyon test sayfasıdır, gerçek bir mağaza değildir.</footer>
+
+<script>
+  // The fake store's OWN cart logic — completely separate from the widget.
+  // This is what a real merchant would already have; they just need one
+  // addEventListener call to also record AI-sourced adds.
+  var cart = [];
+  document.getElementById('main-add-btn').addEventListener('click', function () {
+    cart.push({ id: '__PRODUCT_ID__', source: 'main' });
+    document.getElementById('cart-status').textContent = 'Sepette ' + cart.length + ' ürün var.';
+  });
+
+  window.addEventListener('airw:add-to-cart', function (e) {
+    cart.push({ id: e.detail.productId, source: 'ai' });
+    document.getElementById('cart-status').textContent = 'Sepette ' + cart.length + ' ürün var. (Son eklenen: AI önerisi ' + e.detail.productId + ')';
+  });
+</script>
+
+</body>
+</html>

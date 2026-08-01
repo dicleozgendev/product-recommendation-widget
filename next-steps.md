@@ -8,9 +8,11 @@ Recommendations are currently computed with TF-IDF (text similarity) + a categor
 
 ## Steps needed to connect to a real store
 
-1. **Get the product data**: most platforms (Ticimax, İkas, T-Soft, WooCommerce, Shopify) can export the product catalog as CSV. First version: the store owner uploads a CSV, we compute and store the embeddings. This is much faster than writing a separate API integration for every platform.
-2. **Ship a script tag**: the store owner adds a single `<script>` line to their site (like Intercom/Hotjar). The widget detects the product page and shows recommendations.
-3. **A simple backend**: a small server (Node/Express, cheap/free hosting: Railway, Render) for CSV upload + embedding computation + a recommendations API. Easily fits a small budget.
+1. **Get the product data**: most platforms (Ticimax, İkas, T-Soft, WooCommerce, Shopify) can export the product catalog as CSV. ✅ Built: `POST /api/stores/:id/products` accepts a real CSV upload and computes recommendations immediately.
+2. **Ship a script tag**: the store owner adds a single `<script>` line to their site (like Intercom/Hotjar). ✅ Built: `public/widget.js` — reads its own config from its script tag, fetches recommendations, renders cards, and hands off cart integration via a `airw:add-to-cart` browser event the merchant listens for. Verified working end-to-end against a simulated third-party page in `build/test-widget.js`.
+3. **A simple backend**: a small server (Node/Express, cheap/free hosting: Railway, Render) for CSV upload + embedding computation + a recommendations API. ✅ Built (`server/stores.js`, `server/index.js`) — currently JSON-file storage per store with a single hashed API key each. Real, works, onboards a handful of pilot stores; not yet billing/rotation/admin-UI-grade. See README.md's "Script-tag widget" section for the full honest scope note.
+
+**What's still manual / not yet built:** there's no self-serve signup UI (store creation is one API call, run by us on the merchant's behalf via `create-demo-store.js` or a direct curl/Postman call, not a webpage they sign up on themselves). No billing/subscription enforcement. No per-domain CORS allow-listing (the recommendation endpoint is open to any origin right now, which is fine for a handful of trusted pilot merchants but not for public rollout). These are the right next things to build once there's a second or third paying pilot, not before.
 
 ## Suggested pricing (starting point)
 
